@@ -173,9 +173,8 @@ output {
 .meter {
   margin-left: auto;
   color: var(--muted);
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
 }
 .score {
   position: relative;
@@ -187,9 +186,8 @@ output {
   top: 108px;
   width: 32px;
   height: 228px;
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
   color: var(--muted);
 }
 .pitch-axis span {
@@ -237,9 +235,8 @@ output {
   padding: 2px 4px;
 }
 .tile-tools > span {
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
   color: var(--muted);
   margin-right: auto;
 }
@@ -261,13 +258,6 @@ output {
 .grip {
   cursor: grab;
   touch-action: none;
-}
-.dragging {
-  opacity: 0.55;
-}
-.drop-target {
-  outline: 2px solid #67d8d0;
-  outline-offset: -2px;
 }
 .chord-card {
   background: transparent;
@@ -324,9 +314,8 @@ output {
 .score-note {
   position: absolute;
   transform: translate(-50%, -50%);
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
   color: var(--voice);
   background: #19212b;
   border: 1px solid var(--voice);
@@ -349,9 +338,8 @@ output {
   gap: 8px;
   padding: 8px 0 0 36px;
   color: var(--muted);
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
 }
 .voice-legend {
   display: flex;
@@ -402,9 +390,8 @@ output {
   gap: 3px;
 }
 .notes {
-  font:
-    11px ui-monospace,
-    monospace;
+  font-size: 11px;
+  font-family: inherit;
   color: var(--muted);
   margin: 8px 0 10px;
 }
@@ -490,9 +477,8 @@ output {
 }
 .neighbor span {
   color: var(--muted);
-  font:
-    9px ui-monospace,
-    monospace;
+  font-size: 9px;
+  font-family: inherit;
 }
 .instrument {
   margin-top: 10px;
@@ -553,9 +539,8 @@ output {
   gap: 8px;
   margin-top: 5px;
   color: var(--muted);
-  font:
-    10px ui-monospace,
-    monospace;
+  font-size: 10px;
+  font-family: inherit;
 }
 .status {
   color: var(--muted);
@@ -683,4 +668,90 @@ output {
   .root-pad {
     min-height: 32px;
   }
+}
+
+.score::before,
+.score::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+}
+.score::before {
+  left: 36px;
+  background: linear-gradient(to right, #080b12c9, transparent);
+}
+.score::after {
+  right: 0;
+  background: linear-gradient(to left, #080b12c9, transparent);
+}
+.score.more-left::before,
+.score.more-right::after {
+  opacity: 1;
+}
+.score-note {
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+}
+.note-dragging {
+  z-index: 6;
+  box-shadow: 0 4px 12px #0008;
+}
+.chord-card {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chord-name {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  margin: 0;
+  opacity: 1;
+  box-shadow:
+    0 12px 28px #0009,
+    0 2px 6px #0006;
+  border-color: var(--accent);
+}
+.chord-tile.dragging {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chord-tile {
+    transition: transform 150ms ease-out;
+  }
+  .drag-ghost {
+    transition: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drag-ghost.settling {
+    transition:
+      left 140ms ease-out,
+      top 140ms ease-out;
+  }
+}
+.chord-card.pitch-set {
+  font-size: 15px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.chord-name.pitch-set {
+  font-size: 19px;
+  letter-spacing: 0;
+}
+.move strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

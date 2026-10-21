@@ -19,7 +19,7 @@ it('preserves identity through every reorder and enforces size limits', () => {
 });
 it('moves by pointer, handles cancellation and ignores taps and unrelated keys', () => {
   document.body.innerHTML =
-    '<div id="timeline-scroll"><article data-chord-index="0"><button></button></article><article data-chord-index="1"></article></div>';
+    '<div id="timeline-scroll"><article class="chord-tile" data-chord-index="0"><button></button></article><article class="chord-tile" data-chord-index="1"></article></div>';
   const tile = document.querySelector('article'),
     handle = document.querySelector('button');
   const target = document.querySelectorAll('article')[1],

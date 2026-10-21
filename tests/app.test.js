@@ -203,3 +203,47 @@ it('preserves the selected chord when deleting another tile', () => {
   expect(app.state.selected).toBe(2);
   expect(app.state.chords[app.state.selected]).toEqual(selected);
 });
+it('edits a chart note, renames and persists the chord, and undoes in one step', () => {
+  change('quality', 'maj7');
+  change('root', '0');
+  const before = JSON.stringify(app.state.chords);
+  const history = app.history.length;
+  const note = $('voice-0-3');
+  note.focus();
+  note.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+  expect(app.state.chords[0].notes).toHaveLength(4);
+  expect($('chord-0').textContent).toBe($('chord-name').textContent);
+  expect(JSON.parse(localStorage.getItem('music-theory-session')).chords).toEqual(app.state.chords);
+  expect(document.activeElement.id).toBe('voice-0-3');
+  expect(app.history).toHaveLength(history + 1);
+  $('undo').click();
+  expect(JSON.stringify(app.state.chords)).toBe(before);
+});
+it('transposes custom voicing with root and replaces it when quality changes', () => {
+  $('voice-0-0').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+  const notes = [...app.state.chords[0].notes];
+  const root = app.state.chords[0].root;
+  change('root', String(root + 1));
+  expect(app.state.chords[0].notes).toEqual(notes.map((n) => n + 1));
+  change('quality', 'm7');
+  expect(app.state.chords[0].notes).toBeUndefined();
+});
+it('leaves key and history unchanged when transposition exceeds MIDI limits', () => {
+  app.state.chords[0] = { root: 0, quality: 'custom', notes: [0, 60, 64, 127] };
+  const history = app.history.length;
+  change('key', '1');
+  expect(app.state.key).toBe(0);
+  expect($('key').value).toBe('0');
+  expect(app.history).toHaveLength(history);
+  change('root', '1');
+  expect(app.state.chords[0].root).toBe(0);
+  expect($('status').textContent).toContain('MIDI');
+});
+it('changes only the dragged voice and keeps other chord voicings intact', async () => {
+  const { voicedProgression } = await import('../src/theory.js');
+  const before = voicedProgression(app.state.chords);
+  $('voice-0-0').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+  const after = voicedProgression(app.state.chords);
+  expect(after[0]).toEqual([before[0][0] + 1, ...before[0].slice(1)]);
+  expect(after.slice(1)).toEqual(before.slice(1));
+});

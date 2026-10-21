@@ -15,6 +15,7 @@ export function renderDetail(state, voicings) {
   const chord = state.chords[state.selected];
   $('position').textContent = `${state.selected + 1} / ${state.chords.length}`;
   $('chord-name').textContent = label(chord);
+  $('chord-name').classList.toggle('pitch-set', label(chord).includes('('));
   $('notes').textContent = voicings[state.selected].map(noteName).join(' · ');
   $('root').value = chord.root;
   $('quality').value = chord.quality;

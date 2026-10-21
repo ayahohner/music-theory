@@ -1,5 +1,6 @@
+import { editedChord } from './chord-names.js';
 import { revealChord, renderArrangement } from './timeline.js';
-import { renderScore } from './voice-score.js';
+import { renderScore, previewScore } from './voice-score.js';
 import { duplicateAt, removeAt, moveTo, movedSelection, addedChord } from './arrangement.js';
 import { INSTRUMENTS } from './instruments.js';
 import { icon } from './icons.js';
@@ -8,7 +9,7 @@ import { bindPerformance, remember, undo } from './performance.js';
 import { Piano } from './audio.js';
 import { generate, preset, PRESETS } from './progressions.js';
 import { load, save } from './storage.js';
-import { NOTES, QUALITIES, transpose, voicedProgression, wrap } from './theory.js';
+import { NOTES, QUALITIES, transpose, voicedProgression, wrap, transposeChord, label } from './theory.js';
 import { Transport } from './transport.js';
 import { $, markPlaying, options, renderDetail, renderKeyboard, renderNeighbors } from './view.js';
 
@@ -39,10 +40,8 @@ function setupOptions() {
   const notes = NOTES.map((name, index) => [index, name]);
   options('root', notes);
   options('key', notes);
-  options(
-    'quality',
-    Object.keys(QUALITIES).map((name) => [name, name]),
-  );
+  options('quality', [...Object.keys(QUALITIES).map((name) => [name, name]), ['custom', 'Custom notes']]);
+  $('quality').lastElementChild.disabled = true;
   options('preset', [['', 'Load…'], ...Object.keys(PRESETS).map((name) => [name, name])]);
 }
 export function render(app) {
@@ -62,7 +61,7 @@ export function render(app) {
   );
   renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord));
   renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
-  renderScore(notes, state.selected, (pitches) => audition(app, pitches));
+  renderScore(notes, state.selected, (pitches) => audition(app, pitches), noteActions(app, notes));
   $('undo').disabled = app.history.length === 0;
   markPlaying(app.playing);
   restoreFocus(focused, state.selected);
@@ -92,6 +91,11 @@ function select(app, selected) {
   listen(app);
 }
 function replace(app, chord) {
+  if (chord === app.state.chords[app.state.selected]) {
+    render(app);
+    $('status').textContent = 'Transposition would exceed the MIDI pitch range.';
+    return;
+  }
   const chords = [...app.state.chords];
   chords[app.state.selected] = chord;
   update(app, { chords });
@@ -121,7 +125,13 @@ async function play(app) {
   }
 }
 function shift(app, amount) {
-  update(app, { chords: transpose(app.state.chords, amount), key: wrap(app.state.key + amount) });
+  const chords = transpose(app.state.chords, amount);
+  if (chords === app.state.chords) {
+    $('key').value = app.state.key;
+    $('status').textContent = 'Transposition would exceed the MIDI pitch range.';
+    return;
+  }
+  update(app, { chords, key: wrap(app.state.key + amount) });
 }
 function arrangementActions(app) {
   return {
@@ -150,6 +160,7 @@ function remove(app, index = app.state.selected) {
 function reorder(app, from, to) {
   if (to < 0 || to >= app.state.chords.length || from === to) return;
   update(app, { chords: moveTo(app.state.chords, from, to), selected: movedSelection(app.state.selected, from, to) });
+  revealChord(to);
   $(`drag-${to}`).focus({ preventScroll: true });
 }
 function exportSession(app) {
@@ -180,8 +191,16 @@ function bindControls(app) {
   $('export').onclick = () => exportSession(app);
 }
 function bindEditing(app) {
-  $('root').onchange = () => replace(app, { ...app.state.chords[app.state.selected], root: Number($('root').value) });
-  $('quality').onchange = () => replace(app, { ...app.state.chords[app.state.selected], quality: $('quality').value });
+  $('root').onchange = () =>
+    replace(
+      app,
+      transposeChord(
+        app.state.chords[app.state.selected],
+        Number($('root').value) - app.state.chords[app.state.selected].root,
+      ),
+    );
+  $('quality').onchange = () =>
+    replace(app, { root: app.state.chords[app.state.selected].root, quality: $('quality').value });
   $('preset').onchange = () => update(app, { chords: preset($('preset').value, app.state.key), selected: 0 });
   $('generate').onclick = () =>
     update(app, {
@@ -200,4 +219,31 @@ function changeTempo(app) {
   if (!app.editingTempo) remember(app);
   app.editingTempo = true;
   update(app, { bpm: Number($('bpm').value) }, false);
+}
+
+function noteActions(app, voicings) {
+  return {
+    start: () => app.transport.stop(),
+    preview: (index, voice, pitch, range) => {
+      const notes = voicings.map((row) => [...row]);
+      notes[index][voice] = pitch;
+      const chord = editedChord(app.state.chords[index], notes[index], QUALITIES);
+      previewScore(notes, index, voice, range);
+      $(`chord-${index}`).textContent = label(chord);
+      $(`chord-${index}`).title = label(chord);
+      $(`chord-${index}`).classList.toggle('pitch-set', label(chord).includes('('));
+      if (index === app.state.selected) $('chord-name').textContent = label(chord);
+    },
+    commit: (index, voice, pitch) => editNote(app, voicings, index, voice, pitch),
+    cancel: () => render(app),
+  };
+}
+function editNote(app, voicings, index, voice, pitch) {
+  const notes = [...voicings[index]];
+  if (notes[voice] === pitch) return;
+  notes[voice] = pitch;
+  const chords = app.state.chords.map((chord, position) => ({ ...chord, notes: [...voicings[position]] }));
+  chords[index] = editedChord(chords[index], notes, QUALITIES);
+  update(app, { chords, selected: index });
+  listen(app);
 }

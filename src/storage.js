@@ -1,7 +1,7 @@
 import { QUALITIES } from './theory.js';
 export const initial = () => ({ chords: [], key: 0, bpm: 96 });
 export function validChord(chord) {
-  return Number.isInteger(chord?.root) && chord.root >= 0 && chord.root < 12 && Object.hasOwn(QUALITIES, chord.quality);
+  return validRoot(chord?.root) && validQuality(chord) && validNotes(chord.notes);
 }
 export function validSession(value) {
   return validSettings(value) && value.chords.length > 0 && value.chords.length <= 16 && value.chords.every(validChord);
@@ -33,4 +33,19 @@ export function save(storage, session) {
   } catch {
     return false;
   }
+}
+
+function validRoot(root) {
+  return Number.isInteger(root) && root >= 0 && root < 12;
+}
+function validQuality(chord) {
+  if (chord.quality === 'custom') return Array.isArray(chord.notes);
+  return Object.hasOwn(QUALITIES, chord.quality);
+}
+function validNotes(notes) {
+  if (notes === undefined) return true;
+  return Array.isArray(notes) && notes.length === 4 && notes.every(validPitch);
+}
+function validPitch(note) {
+  return Number.isInteger(note) && note >= 0 && note <= 127;
 }

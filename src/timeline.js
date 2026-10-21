@@ -1,3 +1,4 @@
+import { bindOverflow, updateOverflow } from './overflow.js';
 import { label } from './theory.js';
 import { $, button } from './view.js';
 import { icon } from './icons.js';
@@ -6,6 +7,8 @@ export function renderArrangement(state, actions) {
   $('timeline-content').style.setProperty('--count', state.chords.length);
   $('progression').replaceChildren(...state.chords.map((chord, index) => tile(chord, index, state, actions)));
   $('add-chord').disabled = state.chords.length >= 16;
+  bindOverflow($('timeline-scroll'));
+  updateOverflow($('timeline-scroll'));
 }
 function tile(chord, index, state, actions) {
   const node = document.createElement('article');
@@ -21,6 +24,8 @@ function tile(chord, index, state, actions) {
   header.append(handle, number, ...editTools(index, state, actions));
   const main = button('chord-card', label(chord), () => actions.select(index));
   main.id = `chord-${index}`;
+  main.title = label(chord);
+  main.classList.toggle('pitch-set', label(chord).includes('('));
   main.setAttribute('aria-label', `Chord ${index + 1}: ${label(chord)}`);
   main.setAttribute('aria-pressed', String(index === state.selected));
   node.classList.toggle('selected', index === state.selected);
@@ -51,4 +56,5 @@ export function revealChord(index) {
   const card = tile.getBoundingClientRect();
   if (card.left < bounds.left) scroller.scrollLeft -= bounds.left - card.left;
   if (card.right > bounds.right) scroller.scrollLeft += card.right - bounds.right;
+  updateOverflow(scroller);
 }

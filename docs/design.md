@@ -21,3 +21,9 @@ The visual language uses restrained dark instrument surfaces, amber for edit sel
 Arrangement tiles carry drag handles, duplicate and remove icons. Clicking the chord auditions it; keyboard arrows on a handle reorder it. Add and duplicate reveal the new selection, and deleting another chord preserves selection identity. A shared horizontal timeline aligns each chord with four named, individually playable voice notes on a 228px pitch plot. The pitch axis stays fixed and the score heading remains visible during horizontal scrolling. This uses spatial correspondence to make harmonic consequences visible beside their cause.
 
 Transpose sits with key, transport with arrangement, sound selection with keyboard, and root-changing controls with the selected chord. Amber root fill explicitly denotes the current root. Instrument choices use synthesis, with additive soft piano as default and reduced FM modulation available as an alternative. Space remains transport control while piano keys are focused; other native buttons retain their normal activation behavior.
+
+## Direct manipulation
+
+Acceptance: a chart-note drag previews pitch and the corresponding chord label, commits one reversible edit, preserves explicit notes through storage/playback, and has an arrow-key equivalent. Card reorder visibly carries the card with the pointer, makes space with neighbor movement, and settles at the dropped position. Hidden timeline columns get edge shadows that disappear at the corresponding end. Remove monospace throughout.
+
+Distinct horizontal positions keep all four voices reachable even at unison. Note drag previews stay inside the visible pitch range; the score reframes after release. Escape cancels either drag. Existing bass root anchors chord recognition, and unmatched pitch collections are labeled explicitly rather than assigned approximate chord names. Reduced-motion users receive immediate neighbor movement without animated settling.

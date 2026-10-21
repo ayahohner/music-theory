@@ -1,3 +1,4 @@
+import { voicingName } from './chord-names.js';
 export const NOTES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 export const QUALITIES = {
   'maj9♯11': [4, 11, 14, 18],
@@ -18,13 +19,27 @@ export const QUALITIES = {
   '6/9': [0, 4, 9, 14],
 };
 export const wrap = (value) => ((value % 12) + 12) % 12;
-export const label = (chord) => `${NOTES[chord.root]}${chord.quality}`;
-export const pitchClasses = (chord) => QUALITIES[chord.quality].map((interval) => wrap(chord.root + interval));
+export const label = (chord) => `${NOTES[chord.root]}${chord.notes ? voicingName(chord, QUALITIES) : chord.quality}`;
+export const pitchClasses = (chord) =>
+  chord.notes?.map(wrap) ?? QUALITIES[chord.quality].map((interval) => wrap(chord.root + interval));
 export const noteName = (midi) => `${NOTES[wrap(midi)]}${Math.floor(midi / 12) - 1}`;
-export const transpose = (chords, amount) => chords.map((chord) => ({ ...chord, root: wrap(chord.root + amount) }));
+export function transpose(chords, amount) {
+  if (!canTranspose(chords, amount)) return chords;
+  return chords.map((chord) => transposeChord(chord, amount));
+}
+export function canTranspose(chords, amount) {
+  return chords.every((chord) => (chord.notes ?? []).every((note) => note + amount >= 0 && note + amount <= 127));
+}
+export function transposeChord(chord, amount) {
+  if (!canTranspose([chord], amount)) return chord;
+  const result = { ...chord, root: wrap(chord.root + amount) };
+  if (chord.notes) result.notes = chord.notes.map((note) => note + amount);
+  return result;
+}
 export const movement = (from, to) => from.reduce((sum, note, index) => sum + Math.abs(note - to[index]), 0);
 
 export function voicings(chord) {
+  if (chord.notes) return [[...chord.notes]];
   const pitches = pitchClasses(chord).sort((a, b) => a - b);
   return pitches
     .flatMap((_, inversion) => {
