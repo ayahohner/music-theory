@@ -247,3 +247,28 @@ it('changes only the dragged voice and keeps other chord voicings intact', async
   expect(after[0]).toEqual([before[0][0] + 1, ...before[0].slice(1)]);
   expect(after.slice(1)).toEqual(before.slice(1));
 });
+it('uses Tonal chord names and contextual notes across the arrangement, inspector, chart and keyboard', async () => {
+  change('preset', 'Jazz turnaround');
+  $('voice-0-0').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+  expect($('chord-0').textContent).toBe('D9');
+  expect($('chord-name').textContent).toBe('D9');
+  expect($('notes').textContent).toContain('F♯3');
+  expect($('voice-0-0').textContent).toBe('F♯3');
+  expect($('key-54').getAttribute('aria-label')).toBe('Play F♯3');
+  await vi.waitFor(() => expect(app.piano.play).toHaveBeenCalledWith([38, 54, 57, 60, 64]));
+});
+it('previews Tonal names while dragging and restores the original on cancellation', () => {
+  change('preset', 'Jazz turnaround');
+  const node = $('voice-0-0');
+  node.setPointerCapture = vi.fn();
+  const history = app.history.length;
+  node.onpointerdown({ button: 0, pointerId: 1, clientY: 100, preventDefault: vi.fn() });
+  node.onpointermove({ clientY: 87 });
+  expect($('chord-name').textContent).toBe('D9');
+  expect($('voice-0-0').textContent).toBe('F♯3');
+  expect($('notes').textContent).toContain('F♯3');
+  expect(app.history).toHaveLength(history);
+  node.onpointercancel();
+  expect($('chord-name').textContent).toBe('Dm9');
+  expect($('voice-0-0').textContent).toBe('F3');
+});

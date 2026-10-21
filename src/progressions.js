@@ -1,4 +1,4 @@
-import { wrap } from './theory.js';
+import { transposeRoot } from './tonal.js';
 export const PRESETS = {
   'Chromatic orbit': [
     [0, 'maj9♯11'],
@@ -42,7 +42,7 @@ export const PRESETS = {
   ],
 };
 export function preset(name, key = 0) {
-  return PRESETS[name].map(([root, quality]) => ({ root: wrap(root + key), quality }));
+  return PRESETS[name].map(([root, quality]) => ({ root: transposeRoot(root, key), quality }));
 }
 const COLORS = {
   m9: ['m7', 'm9', 'm11'],

@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { editedChord, identify } from '../src/chord-names.js';
+import { editedChord } from '../src/chord-names.js';
 import { QUALITIES, label, transpose, voicedProgression, voice } from '../src/theory.js';
 import { load, save, validChord } from '../src/storage.js';
 import { bindNoteDrag, dragPitch } from '../src/note-drag.js';
@@ -10,8 +10,8 @@ it('names edited pitches over the bass and preserves voice identity and octaves'
   const chord = editedChord({ root: 0, quality: 'maj7' }, [60, 64, 67, 70], QUALITIES);
   expect(label(chord)).toBe('C7');
   expect(voice(chord)).toEqual([60, 64, 67, 70]);
-  expect(identify([60, 64, 67, 72], 0, QUALITIES)).toBe('');
-  expect(label(editedChord(chord, [60, 61, 66, 71], QUALITIES))).toBe('C(1,♭9,♯11,7)');
+  expect(label(editedChord({ root: 0 }, [60, 64, 67, 72]))).toBe('C');
+  expect(label(editedChord(chord, [60, 61, 66, 71], QUALITIES))).toBe('[C D♭ G♭ B]');
   expect(voice(editedChord(chord, [72, 64, 67, 70], QUALITIES))).toEqual([72, 64, 67, 70]);
   const shifted = transpose([chord], 2)[0];
   expect(label(shifted)).toBe('D7');

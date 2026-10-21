@@ -1,4 +1,5 @@
-export const frequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
+import { Midi } from 'tonal';
+export const frequency = Midi.midiToFreq;
 export function envelope(ctx, output, start, duration, level) {
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, start);

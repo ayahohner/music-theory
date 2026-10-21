@@ -25,7 +25,7 @@ function tile(chord, index, state, actions) {
   const main = button('chord-card', label(chord), () => actions.select(index));
   main.id = `chord-${index}`;
   main.title = label(chord);
-  main.classList.toggle('pitch-set', label(chord).includes('('));
+  main.classList.toggle('pitch-set', label(chord).startsWith('['));
   main.setAttribute('aria-label', `Chord ${index + 1}: ${label(chord)}`);
   main.setAttribute('aria-pressed', String(index === state.selected));
   node.classList.toggle('selected', index === state.selected);

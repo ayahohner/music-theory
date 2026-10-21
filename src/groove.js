@@ -21,7 +21,7 @@ export function barEvents(notes, duration, groove) {
   const pattern = GROOVES[groove];
   const beat = duration / 4;
   const harmonic = pattern.chords.map((at) => event('chord', at, beat, pattern.swing, notes.slice(1)));
-  const bass = pattern.bass.map((at) => event('bass', at, beat, pattern.swing, [notes[0] - 12]));
+  const bass = pattern.bass.map((at) => event('bass', at, beat, pattern.swing, [notes[0]]));
   const drums = ['kick', 'snare', 'hat'].flatMap((kind) =>
     pattern[kind].map((at) => event(kind, at, beat, pattern.swing, [])),
   );

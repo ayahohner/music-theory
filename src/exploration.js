@@ -1,5 +1,6 @@
+import { Note } from 'tonal';
 import { transformations } from './harmony.js';
-import { label, NOTES, wrap, transposeChord } from './theory.js';
+import { label, NOTES, transposeChord } from './theory.js';
 import { $, button } from './view.js';
 export function renderMoves(chord, key, choose) {
   $('moves').replaceChildren(
@@ -15,10 +16,10 @@ export function renderMoves(chord, key, choose) {
 export function renderRoots(chord, choose) {
   $('root-map').replaceChildren(
     ...Array.from({ length: 12 }, (_, i) => {
-      const root = wrap(i * 7);
+      const root = Note.chroma(Note.transposeFifths('C', i));
       const node = button('root-pad', NOTES[root], () => choose(transposeChord(chord, root - chord.root)));
       node.id = `root-pad-${root}`;
-      node.setAttribute('aria-label', `Set root ${NOTES[root]}`);
+      node.setAttribute('aria-label', `Transpose to bass ${NOTES[root]}`);
       node.setAttribute('aria-pressed', String(root === chord.root));
       return node;
     }),

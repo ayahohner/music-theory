@@ -1,51 +1,70 @@
-const INTERVALS = ['1', '♭9', '9', '♭3', '3', '11', '♯11', '5', '♭13', '13', '♭7', '7'];
-const EXTRA = {
-  '9sus4': [0, 2, 5, 7, 10],
-  maj9sus4: [0, 2, 5, 7, 11],
-  '7♯9': [0, 3, 4, 7, 10],
-  'maj7♯11': [0, 4, 6, 7, 11],
-  'm7♭9': [0, 1, 3, 7, 10],
-  mMaj9: [0, 2, 3, 7, 11],
-  'maj9♯5': [0, 2, 4, 8, 11],
-  'm9♭5': [0, 2, 3, 6, 10],
-  '9♭5': [0, 2, 4, 6, 10],
-  '9♯5': [0, 2, 4, 8, 10],
-  '7♭13': [0, 4, 7, 8, 10],
-  'maj7♭5': [0, 4, 6, 11],
-  maj7sus4: [0, 5, 7, 11],
-  '': [0, 4, 7],
-  m: [0, 3, 7],
-  sus2: [0, 2, 7],
-  sus4: [0, 5, 7],
-  dim: [0, 3, 6],
-  aug: [0, 4, 8],
-  6: [0, 4, 7, 9],
-  m6: [0, 3, 7, 9],
-  mMaj7: [0, 3, 7, 11],
-  '7♭5': [0, 4, 6, 10],
-  'maj7♯5': [0, 4, 8, 11],
-  '7♯5': [0, 4, 8, 10],
-  add9: [0, 2, 4, 7],
-  madd9: [0, 2, 3, 7],
-};
-export function intervals(notes, root) {
-  return [...new Set([0, ...notes.map((note) => (((note - root) % 12) + 12) % 12)])].sort((a, b) => a - b);
+import { Chord, Note, Pcset } from 'tonal';
+import { QUALITIES, chordType } from './chord-catalog.js';
+import { rootName, pitchClass, display } from './tonal.js';
+function soundingNames(chord) {
+  return [36 + chord.root, ...chord.notes].sort((a, b) => a - b).map(pitchClass);
 }
-export function identify(notes, root, qualities) {
-  const actual = intervals(notes, root).join(',');
-  return Object.entries({ ...qualities, ...EXTRA }).find(
-    ([, pitches]) => intervals(pitches, 0).join(',') === actual,
-  )?.[0];
+function matchesProfile(notes, root, quality) {
+  const expected = [root, ...QUALITIES[quality].map((interval) => root + interval)].map((n) => rootName(n % 12));
+  return Pcset.isEqual(expected, [rootName(root), ...notes.map(pitchClass)]);
 }
-export function voicingName(chord, qualities) {
-  return (
-    identify(chord.notes, chord.root, qualities) ??
-    `(${intervals(chord.notes, chord.root)
-      .map((i) => INTERVALS[i])
-      .join(',')})`
-  );
+export function identify(notes, root) {
+  return Object.keys(QUALITIES).find((quality) => matchesProfile(notes, root, quality));
 }
-export function editedChord(chord, notes, qualities) {
-  const quality = identify(notes, chord.root, qualities);
-  return { root: chord.root, quality: Object.hasOwn(qualities, quality) ? quality : 'custom', notes: [...notes] };
+function detectedSymbol(chord) {
+  if (!chord.notes) return Chord.getChord(chordType(chord.quality), rootName(chord.root)).symbol;
+  if (preservesProfile(chord))
+    return Chord.getChord(chordType(chord.quality), rootName(chord.root), soundingNames(chord)[0]).symbol;
+  const names = soundingNames(chord);
+  const exact = Chord.detect(names);
+  const candidates = exact.length ? exact : Chord.detect(names, { assumePerfectFifth: true });
+  return preferred(candidates, chord.root) ?? upperChord(chord) ?? '';
+}
+function preservesProfile(chord) {
+  return Object.hasOwn(QUALITIES, chord.quality) && matchesProfile(chord.notes, chord.root, chord.quality);
+}
+function preferred(candidates, root) {
+  return candidates.find((symbol) => Note.chroma(parsedChord(symbol).tonic) === root) ?? candidates[0];
+}
+function upperChord(chord) {
+  const upper = Chord.detect([...chord.notes].sort((a, b) => a - b).map(pitchClass))[0];
+  if (!upper) return undefined;
+  const detected = parsedChord(upper);
+  return Chord.getChord(safeAlias(detected), detected.tonic, soundingNames(chord)[0]).symbol;
+}
+export function chordLabel(chord) {
+  const symbol = chordSymbol(chord);
+  if (!symbol) return `[${Pcset.notes(soundingNames(chord)).join(' ')}]`.replaceAll('b', '♭').replaceAll('#', '♯');
+  const parsed = parsedChord(symbol);
+  const type = safeAlias(parsed);
+  return display(Chord.getChord(type, parsed.tonic, parsed.bass).symbol);
+}
+export function chordNotes(chord) {
+  return parsedChord(chordSymbol(chord)).notes;
+}
+export function editedChord(chord, notes) {
+  return { root: chord.root, quality: identify(notes, chord.root) ?? 'custom', notes: [...notes] };
+}
+
+function safeAlias(parsed) {
+  if (parsed.type === 'major') return '';
+  return parsed.aliases.find((alias) => !alias.includes('/')) ?? '';
+}
+function parsedChord(symbol) {
+  const parsed = Chord.get(symbol);
+  if (!parsed.empty) return parsed;
+  const slash = symbol.lastIndexOf('/');
+  const upper = Chord.get(symbol.slice(0, slash));
+  if (upper.empty) return parsed;
+  return Chord.getChord(safeAlias(upper), upper.tonic, symbol.slice(slash + 1));
+}
+export function harmonicRoot(chord) {
+  return Note.chroma(parsedChord(chordSymbol(chord)).tonic) ?? chord.root;
+}
+
+export function chordSymbol(chord) {
+  const raw = detectedSymbol(chord);
+  const parsed = parsedChord(raw);
+  if (parsed.empty) return '';
+  return Chord.getChord(safeAlias(parsed), parsed.tonic, parsed.bass).symbol;
 }

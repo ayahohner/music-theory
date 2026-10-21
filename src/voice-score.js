@@ -9,7 +9,7 @@ export function scoreRange(voicings) {
 export function pitchY(note, range) {
   return 12 + ((range.high - note) / (range.high - range.low)) * 204;
 }
-export function renderScore(voicings, selected, play, edits) {
+export function renderScore(voicings, selected, play, edits, chords) {
   const range = scoreRange(voicings),
     width = voicings.length * 160;
   const rows = pitchRows(range);
@@ -22,7 +22,9 @@ export function renderScore(voicings, selected, play, edits) {
     `<svg viewBox="0 0 ${width} 228" preserveAspectRatio="none" aria-hidden="true">${lines}${paths}</svg>`;
   $('voice-paths').append(
     ...voicings.flatMap((notes, index) =>
-      notes.map((note, voice) => noteButton(note, voice, index, voicings.length, range, selected, play, edits)),
+      notes.map((note, voice) =>
+        noteButton(note, voice, index, voicings.length, range, selected, play, edits, chords[index]),
+      ),
     ),
   );
 }
@@ -38,14 +40,14 @@ function voicePath(voicings, voice, range) {
     .join(' ');
   return `<polyline points="${points}" fill="none" stroke="${VOICE_COLORS[voice]}" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
 }
-function noteButton(note, voice, index, count, range, selected, play, edits) {
-  const node = button('score-note', noteName(note), () => play([note]));
+function noteButton(note, voice, index, count, range, selected, play, edits, chord) {
+  const node = button('score-note', noteName(note, chord), () => play([note]));
   node.id = `voice-${index}-${voice}`;
   node.style.left = `${((26 + index * 160 + voice * 36) / (count * 160)) * 100}%`;
   node.style.top = `${pitchY(note, range)}px`;
   node.style.setProperty('--voice', VOICE_COLORS[voice]);
   node.classList.toggle('selected', index === selected);
-  node.setAttribute('aria-label', `Play ${noteName(note)}, voice ${voice + 1}, chord ${index + 1}`);
+  node.setAttribute('aria-label', `Play ${noteName(note, chord)}, voice ${voice + 1}, chord ${index + 1}`);
   node.title = 'Drag vertically or use ↑ / ↓ to change pitch; click to play';
   bindNoteDrag(node, note, range, {
     start: edits.start,
@@ -56,11 +58,15 @@ function noteButton(note, voice, index, count, range, selected, play, edits) {
   return node;
 }
 
-export function previewScore(voicings, index, voice, range) {
+export function previewScore(voicings, index, voice, range, chord) {
   const note = voicings[index][voice];
   const node = $(`voice-${index}-${voice}`);
   node.style.top = `${pitchY(note, range)}px`;
-  node.textContent = noteName(note);
+  voicings[index].forEach((pitch, part) => {
+    const button = $(`voice-${index}-${part}`);
+    button.textContent = noteName(pitch, chord);
+    button.setAttribute('aria-label', `Play ${noteName(pitch, chord)}, voice ${part + 1}, chord ${index + 1}`);
+  });
   const paths = $('voice-paths').querySelectorAll('polyline');
   const parsed = document.createElement('template');
   parsed.innerHTML = `<svg>${voicePath(voicings, voice, range)}</svg>`;

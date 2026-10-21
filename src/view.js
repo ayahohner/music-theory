@@ -1,4 +1,4 @@
-import { label, movement, neighbors, noteName, NOTES, wrap } from './theory.js';
+import { label, movement, neighbors, noteName, wrap } from './theory.js';
 export const $ = (id) => document.getElementById(id);
 export function options(id, values) {
   $(id).replaceChildren(...values.map(([value, text]) => new Option(text, value)));
@@ -15,8 +15,8 @@ export function renderDetail(state, voicings) {
   const chord = state.chords[state.selected];
   $('position').textContent = `${state.selected + 1} / ${state.chords.length}`;
   $('chord-name').textContent = label(chord);
-  $('chord-name').classList.toggle('pitch-set', label(chord).includes('('));
-  $('notes').textContent = voicings[state.selected].map(noteName).join(' · ');
+  $('chord-name').classList.toggle('pitch-set', label(chord).startsWith('['));
+  $('notes').textContent = voicings[state.selected].map((note) => noteName(note, chord)).join(' · ');
   $('root').value = chord.root;
   $('quality').value = chord.quality;
   $('key').value = state.key;
@@ -40,22 +40,24 @@ export function renderNeighbors(chord, notes, previous, replace) {
     }),
   );
 }
-export function renderKeyboard(notes, play) {
+export function renderKeyboard(notes, play, chord) {
   const keys = Array.from({ length: 36 }, (_, i) => i + 48);
   let whites = 0;
   $('keyboard').replaceChildren(
     ...keys.map((note) => {
       const black = [1, 3, 6, 8, 10].includes(wrap(note));
       if (!black) whites += 1;
-      return pianoKey(note, black, whites, notes, play);
+      return pianoKey(note, black, whites, notes, play, chord);
     }),
   );
 }
-function pianoKey(note, black, whites, notes, play) {
-  const node = button(`key ${black ? 'black' : 'white'}`, NOTES[wrap(note)], () => play([note]));
+function pianoKey(note, black, whites, notes, play, chord) {
+  const node = button(`key ${black ? 'black' : 'white'}`, noteName(note, chord).replace(/-?\d+$/, ''), () =>
+    play([note]),
+  );
   node.id = `key-${note}`;
   node.classList.toggle('active', notes.includes(note));
-  node.setAttribute('aria-label', `Play ${noteName(note)}`);
+  node.setAttribute('aria-label', `Play ${noteName(note, chord)}`);
   node.dataset.transportShortcut = 'true';
   if (black) node.style.left = `${(whites / 21) * 100 - 1.55}%`;
   return node;

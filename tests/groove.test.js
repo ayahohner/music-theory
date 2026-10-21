@@ -11,7 +11,7 @@ it('keeps all onsets inside the bar, preserves notes, and distinguishes feels', 
   for (const events of [hold, pocket, broken]) {
     expect(events.every((e) => e.at >= 0 && e.at < 2)).toBe(true);
     expect(events.find((e) => e.kind === 'chord').notes).toEqual(notes.slice(1));
-    expect(events.find((e) => e.kind === 'bass').notes).toEqual([24]);
+    expect(events.find((e) => e.kind === 'bass').notes).toEqual([36]);
   }
   expect(pocket.filter((e) => e.kind === 'snare').map((e) => e.at)).toEqual([0.5, 1.5]);
   expect(broken.filter((e) => e.kind === 'snare').map((e) => e.at)).toEqual([1]);

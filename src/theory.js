@@ -1,28 +1,13 @@
-import { voicingName } from './chord-names.js';
-export const NOTES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-export const QUALITIES = {
-  'maj9♯11': [4, 11, 14, 18],
-  '7♯11': [4, 10, 14, 18],
-  '7alt': [4, 10, 13, 20],
-  m11: [3, 10, 14, 17],
-  maj7: [0, 4, 7, 11],
-  m7: [0, 3, 7, 10],
-  7: [0, 4, 7, 10],
-  maj9: [4, 7, 11, 14],
-  m9: [3, 7, 10, 14],
-  9: [4, 7, 10, 14],
-  13: [4, 10, 14, 21],
-  '7♭9': [4, 7, 10, 13],
-  'm7♭5': [0, 3, 6, 10],
-  dim7: [0, 3, 6, 9],
-  '7sus4': [0, 5, 7, 10],
-  '6/9': [0, 4, 9, 14],
-};
+import { chordLabel, chordNotes } from './chord-names.js';
+import { QUALITIES } from './chord-catalog.js';
+import { display, rootName, spellNote, transposePitch, transposeRoot } from './tonal.js';
+export { QUALITIES } from './chord-catalog.js';
+export const NOTES = Array.from({ length: 12 }, (_, i) => display(rootName(i)));
 export const wrap = (value) => ((value % 12) + 12) % 12;
-export const label = (chord) => `${NOTES[chord.root]}${chord.notes ? voicingName(chord, QUALITIES) : chord.quality}`;
+export const label = chordLabel;
 export const pitchClasses = (chord) =>
   chord.notes?.map(wrap) ?? QUALITIES[chord.quality].map((interval) => wrap(chord.root + interval));
-export const noteName = (midi) => `${NOTES[wrap(midi)]}${Math.floor(midi / 12) - 1}`;
+export const noteName = (midi, chord) => spellNote(midi, chord ? chordNotes(chord) : []);
 export function transpose(chords, amount) {
   if (!canTranspose(chords, amount)) return chords;
   return chords.map((chord) => transposeChord(chord, amount));
@@ -32,8 +17,8 @@ export function canTranspose(chords, amount) {
 }
 export function transposeChord(chord, amount) {
   if (!canTranspose([chord], amount)) return chord;
-  const result = { ...chord, root: wrap(chord.root + amount) };
-  if (chord.notes) result.notes = chord.notes.map((note) => note + amount);
+  const result = { ...chord, root: transposeRoot(chord.root, amount) };
+  if (chord.notes) result.notes = chord.notes.map((note) => transposePitch(note, amount));
   return result;
 }
 export const movement = (from, to) => from.reduce((sum, note, index) => sum + Math.abs(note - to[index]), 0);

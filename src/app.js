@@ -1,3 +1,4 @@
+import { qualityLabel } from './chord-catalog.js';
 import { editedChord } from './chord-names.js';
 import { revealChord, renderArrangement } from './timeline.js';
 import { renderScore, previewScore } from './voice-score.js';
@@ -9,7 +10,7 @@ import { bindPerformance, remember, undo } from './performance.js';
 import { Piano } from './audio.js';
 import { generate, preset, PRESETS } from './progressions.js';
 import { load, save } from './storage.js';
-import { NOTES, QUALITIES, transpose, voicedProgression, wrap, transposeChord, label } from './theory.js';
+import { NOTES, QUALITIES, transpose, voicedProgression, wrap, transposeChord, label, noteName } from './theory.js';
 import { Transport } from './transport.js';
 import { $, markPlaying, options, renderDetail, renderKeyboard, renderNeighbors } from './view.js';
 
@@ -40,7 +41,7 @@ function setupOptions() {
   const notes = NOTES.map((name, index) => [index, name]);
   options('root', notes);
   options('key', notes);
-  options('quality', [...Object.keys(QUALITIES).map((name) => [name, name]), ['custom', 'Custom notes']]);
+  options('quality', [...Object.keys(QUALITIES).map((name) => [name, qualityLabel(name)]), ['custom', 'Custom notes']]);
   $('quality').lastElementChild.disabled = true;
   options('preset', [['', 'Load…'], ...Object.keys(PRESETS).map((name) => [name, name])]);
 }
@@ -52,7 +53,7 @@ export function render(app) {
   const notes = voicedProgression(state.chords);
   renderArrangement(state, arrangementActions(app));
   renderDetail(state, notes);
-  renderKeyboard(notes[state.selected], (pitches) => audition(app, pitches));
+  renderKeyboard(notes[state.selected], (pitches) => audition(app, pitches), state.chords[state.selected]);
   renderNeighbors(
     state.chords[state.selected],
     notes[state.selected],
@@ -61,7 +62,7 @@ export function render(app) {
   );
   renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord));
   renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
-  renderScore(notes, state.selected, (pitches) => audition(app, pitches), noteActions(app, notes));
+  renderScore(notes, state.selected, (pitches) => audition(app, pitches), noteActions(app, notes), state.chords);
   $('undo').disabled = app.history.length === 0;
   markPlaying(app.playing);
   restoreFocus(focused, state.selected);
@@ -227,12 +228,16 @@ function noteActions(app, voicings) {
     preview: (index, voice, pitch, range) => {
       const notes = voicings.map((row) => [...row]);
       notes[index][voice] = pitch;
-      const chord = editedChord(app.state.chords[index], notes[index], QUALITIES);
-      previewScore(notes, index, voice, range);
+      const chord = editedChord(app.state.chords[index], notes[index]);
+      previewScore(notes, index, voice, range, chord);
       $(`chord-${index}`).textContent = label(chord);
       $(`chord-${index}`).title = label(chord);
-      $(`chord-${index}`).classList.toggle('pitch-set', label(chord).includes('('));
-      if (index === app.state.selected) $('chord-name').textContent = label(chord);
+      $(`chord-${index}`).classList.toggle('pitch-set', label(chord).startsWith('['));
+      if (index === app.state.selected) {
+        $('chord-name').textContent = label(chord);
+        $('chord-name').classList.toggle('pitch-set', label(chord).startsWith('['));
+        $('notes').textContent = notes[index].map((note) => noteName(note, chord)).join(' · ');
+      }
     },
     commit: (index, voice, pitch) => editNote(app, voicings, index, voice, pitch),
     cancel: () => render(app),
@@ -243,7 +248,7 @@ function editNote(app, voicings, index, voice, pitch) {
   if (notes[voice] === pitch) return;
   notes[voice] = pitch;
   const chords = app.state.chords.map((chord, position) => ({ ...chord, notes: [...voicings[position]] }));
-  chords[index] = editedChord(chords[index], notes, QUALITIES);
+  chords[index] = editedChord(chords[index], notes);
   update(app, { chords, selected: index });
   listen(app);
 }
