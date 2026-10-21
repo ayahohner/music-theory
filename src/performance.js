@@ -1,5 +1,9 @@
 import { $ } from './view.js';
 export function bindPerformance(app, undo) {
+  $('instrument').onchange = () => {
+    app.transport.stop();
+    app.piano.instrument = $('instrument').value;
+  };
   $('groove').onchange = () => {
     app.transport.stop();
     app.piano.groove = $('groove').value;
@@ -28,7 +32,8 @@ function isEntry(target) {
   return ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable;
 }
 function transportShortcut(event, app) {
-  if (event.target.closest('button, a')) return;
+  const control = event.target.closest('button, a');
+  if (control && !control.dataset.transportShortcut) return;
   event.preventDefault();
   toggle(app);
 }

@@ -26,7 +26,7 @@ export function electric(engine, note, start, duration) {
   const gain = envelope(ctx, engine.output, start, duration, 0.065);
   carrier.frequency.value = frequency(note);
   modulator.frequency.value = frequency(note) * 2;
-  amount.gain.setValueAtTime(frequency(note) * 0.7, start);
+  amount.gain.setValueAtTime(frequency(note) * 0.12, start);
   amount.gain.exponentialRampToValueAtTime(1, start + duration * 0.7);
   modulator.connect(amount).connect(carrier.frequency);
   carrier.connect(gain);

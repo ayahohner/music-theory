@@ -1,4 +1,4 @@
-import { label, movement, neighbors, noteName, NOTES, wrap, pitchClasses } from './theory.js';
+import { label, movement, neighbors, noteName, NOTES, wrap } from './theory.js';
 export const $ = (id) => document.getElementById(id);
 export function options(id, values) {
   $(id).replaceChildren(...values.map(([value, text]) => new Option(text, value)));
@@ -10,22 +10,6 @@ export function button(className, text, action) {
   node.textContent = text;
   node.addEventListener('click', action);
   return node;
-}
-export function renderCards(state, select) {
-  $('progression').replaceChildren(
-    ...state.chords.map((chord, index) => {
-      const node = button('chord-card', '', () => select(index));
-      node.id = `chord-${index}`;
-      node.setAttribute('aria-pressed', String(index === state.selected));
-      node.setAttribute('aria-label', `Chord ${index + 1}: ${label(chord)}`);
-      node.innerHTML = `<span class="number">${String(index + 1).padStart(2, '0')}</span><strong>${label(chord)}</strong><span class="beats">${pitchClasses(
-        chord,
-      )
-        .map((n) => NOTES[n])
-        .join(' · ')}</span>`;
-      return node;
-    }),
-  );
 }
 export function renderDetail(state, voicings) {
   const chord = state.chords[state.selected];
@@ -71,6 +55,7 @@ function pianoKey(note, black, whites, notes, play) {
   node.id = `key-${note}`;
   node.classList.toggle('active', notes.includes(note));
   node.setAttribute('aria-label', `Play ${noteName(note)}`);
+  node.dataset.transportShortcut = 'true';
   if (black) node.style.left = `${(whites / 21) * 100 - 1.55}%`;
   return node;
 }

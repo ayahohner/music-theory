@@ -45,6 +45,7 @@ it('creates one output graph, synthesizes FM notes, and releases all audio nodes
   await piano.ready();
   await piano.ready();
   expect(create).toHaveBeenCalledTimes(1);
+  piano.instrument = 'electric';
   piano.play([69]);
   const oscillators = [...piano.voices];
   expect(oscillators.map((n) => n.frequency.value)).toEqual([880, 440]);
@@ -81,4 +82,22 @@ it('sets volume before and after audio activation', async () => {
   expect(piano.output.gain.value).toBe(0.2);
   piano.setVolume(0.6);
   expect(piano.output.gain.setTargetAtTime).toHaveBeenCalledWith(0.6, 1, 0.02);
+});
+it('provides distinct additive instruments and releases their partials', async () => {
+  const piano = new Piano(fakeContext);
+  await piano.ready();
+  for (const [instrument, frequencies] of Object.entries({
+    felt: [440, 880, 1320],
+    bell: [440, 880, 1760],
+    organ: [440, 880, 1320, 1760],
+  })) {
+    piano.instrument = instrument;
+    piano.play([69]);
+    const voices = [...piano.voices];
+    expect(voices.map((n) => n.frequency.value)).toEqual(frequencies);
+    voices.forEach((n) => {
+      n.onended();
+    });
+    expect(piano.voices.size).toBe(0);
+  }
 });

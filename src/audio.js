@@ -1,8 +1,17 @@
+import { instrumentNote } from './instruments.js';
 import { barEvents } from './groove.js';
-import { bass, electric, kick, noiseBuffer, noiseHit } from './synthesis.js';
+import { bass, kick, noiseBuffer, noiseHit } from './synthesis.js';
 export class Piano {
   constructor(create = () => new AudioContext()) {
-    Object.assign(this, { create, context: null, voices: new Set(), groove: 'pocket', wobble: 0.4, volume: 0.55 });
+    Object.assign(this, {
+      create,
+      context: null,
+      voices: new Set(),
+      instrument: 'felt',
+      groove: 'hold',
+      wobble: 0.4,
+      volume: 0.55,
+    });
   }
   async ready() {
     if (!this.context) this.initialize();
@@ -22,7 +31,7 @@ export class Piano {
   }
   play(notes, duration = 1.4) {
     notes.forEach((note) => {
-      electric(this, note, this.context.currentTime, duration);
+      instrumentNote(this, note, this.context.currentTime, duration);
     });
   }
   bar(notes, duration, start) {
@@ -45,7 +54,7 @@ export class Piano {
   chord(notes, start, duration) {
     const length = this.groove === 'hold' ? duration * 0.9 : duration / 4;
     notes.forEach((note) => {
-      electric(this, note, start, length);
+      instrumentNote(this, note, start, length);
     });
   }
   stop() {

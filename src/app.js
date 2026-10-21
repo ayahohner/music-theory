@@ -1,11 +1,16 @@
-import { renderMoves, renderRoots, voicePaths } from './exploration.js';
+import { revealChord, renderArrangement } from './timeline.js';
+import { renderScore } from './voice-score.js';
+import { duplicateAt, removeAt, moveTo, movedSelection, addedChord } from './arrangement.js';
+import { INSTRUMENTS } from './instruments.js';
+import { icon } from './icons.js';
+import { renderMoves, renderRoots } from './exploration.js';
 import { bindPerformance, remember, undo } from './performance.js';
 import { Piano } from './audio.js';
 import { generate, preset, PRESETS } from './progressions.js';
 import { load, save } from './storage.js';
 import { NOTES, QUALITIES, transpose, voicedProgression, wrap } from './theory.js';
 import { Transport } from './transport.js';
-import { $, markPlaying, options, renderCards, renderDetail, renderKeyboard, renderNeighbors } from './view.js';
+import { $, markPlaying, options, renderDetail, renderKeyboard, renderNeighbors } from './view.js';
 
 export function createApp(storage, piano = new Piano()) {
   const saved = load(storage) ?? { chords: preset('Jazz turnaround'), key: 0, bpm: 96 };
@@ -27,6 +32,10 @@ function setPlaying(app, index) {
   markPlaying(index);
 }
 function setupOptions() {
+  options('instrument', Object.entries(INSTRUMENTS));
+  $('audition').innerHTML = icon('play');
+  $('append').innerHTML = icon('duplicate');
+  $('remove').innerHTML = icon('remove');
   const notes = NOTES.map((name, index) => [index, name]);
   options('root', notes);
   options('key', notes);
@@ -42,7 +51,7 @@ export function render(app) {
   const focused = document.activeElement;
   const { state } = app;
   const notes = voicedProgression(state.chords);
-  renderCards(state, (index) => select(app, index));
+  renderArrangement(state, arrangementActions(app));
   renderDetail(state, notes);
   renderKeyboard(notes[state.selected], (pitches) => audition(app, pitches));
   renderNeighbors(
@@ -53,10 +62,11 @@ export function render(app) {
   );
   renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord));
   renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
-  voicePaths(notes, state.selected);
+  renderScore(notes, state.selected, (pitches) => audition(app, pitches));
   $('undo').disabled = app.history.length === 0;
   markPlaying(app.playing);
   restoreFocus(focused, state.selected);
+  revealChord(state.selected);
 }
 function restoreFocus(focused, selected) {
   if (focused.isConnected) return;
@@ -79,6 +89,7 @@ export function update(app, changes, record = true) {
 function select(app, selected) {
   app.state.selected = selected;
   render(app);
+  listen(app);
 }
 function replace(app, chord) {
   const chords = [...app.state.chords];
@@ -112,17 +123,34 @@ async function play(app) {
 function shift(app, amount) {
   update(app, { chords: transpose(app.state.chords, amount), key: wrap(app.state.key + amount) });
 }
-function append(app) {
+function arrangementActions(app) {
+  return {
+    select: (index) => select(app, index),
+    duplicate: (index) => duplicate(app, index),
+    remove: (index) => remove(app, index),
+    move: (from, to) => reorder(app, from, to),
+  };
+}
+function duplicate(app, index = app.state.selected) {
   if (app.state.chords.length >= 16) return;
+  update(app, { chords: duplicateAt(app.state.chords, index), selected: index + 1 });
+}
+function add(app) {
+  if (app.state.chords.length >= 16) return;
+  update(app, { chords: addedChord(app.state.chords, app.state.key), selected: app.state.chords.length });
+}
+function remove(app, index = app.state.selected) {
+  if (app.state.chords.length <= 1) return;
+  const chords = removeAt(app.state.chords, index);
   update(app, {
-    chords: [...app.state.chords, { ...app.state.chords[app.state.selected] }],
-    selected: app.state.chords.length,
+    chords,
+    selected: Math.min(app.state.selected - Number(index < app.state.selected), chords.length - 1),
   });
 }
-function remove(app) {
-  if (app.state.chords.length <= 1) return;
-  const chords = app.state.chords.filter((_, index) => index !== app.state.selected);
-  update(app, { chords, selected: Math.min(app.state.selected, chords.length - 1) });
+function reorder(app, from, to) {
+  if (to < 0 || to >= app.state.chords.length || from === to) return;
+  update(app, { chords: moveTo(app.state.chords, from, to), selected: movedSelection(app.state.selected, from, to) });
+  $(`drag-${to}`).focus({ preventScroll: true });
 }
 function exportSession(app) {
   const blob = new Blob(
@@ -163,7 +191,8 @@ function bindEditing(app) {
   $('key').onchange = () => shift(app, Number($('key').value) - app.state.key);
   $('up').onclick = () => shift(app, 1);
   $('down').onclick = () => shift(app, -1);
-  $('append').onclick = () => append(app);
+  $('append').onclick = () => duplicate(app);
+  $('add-chord').onclick = () => add(app);
   $('remove').onclick = () => remove(app);
 }
 

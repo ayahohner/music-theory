@@ -30,7 +30,7 @@ it('edits, transposes, selects and replaces chords through real controls', () =>
   $('down').click();
   change('key', '5');
   expect(app.state.key).toBe(5);
-  $('progression').children[1].click();
+  $('chord-1').click();
   expect(app.state.selected).toBe(1);
   $('neighbors').children[0].click();
   expect($('status').textContent).toContain('Saved');
@@ -148,7 +148,7 @@ it('preserves native button Space, semantic focus and playing indication', () =>
   expect(document.activeElement.id).toBe('root-pad-7');
   app.transport.onStep(0);
   $('chord-1').click();
-  expect($('chord-0').classList.contains('playing')).toBe(true);
+  expect($('chord-0').closest('article').classList.contains('playing')).toBe(true);
   expect($('chord-1').getAttribute('aria-pressed')).toBe('true');
 });
 it('treats tempo dragging as one undoable edit and retains earlier chord changes', () => {
@@ -164,4 +164,42 @@ it('treats tempo dragging as one undoable edit and retains earlier chord changes
   expect(app.state.bpm).toBe(96);
   $('undo').click();
   expect(JSON.stringify(app.state.chords)).toBe(original);
+});
+it('auditions cards and edits the arrangement in place with undo', async () => {
+  const first = { ...app.state.chords[0] };
+  $('chord-1').click();
+  await vi.waitFor(() => expect(app.piano.play).toHaveBeenCalled());
+  $('copy-0').click();
+  expect(app.state.chords[1]).toEqual(first);
+  $('delete-1').click();
+  expect(app.state.chords).toHaveLength(4);
+  $('add-chord').click();
+  expect(app.state.chords.at(-1)).toEqual({ root: app.state.key, quality: 'maj9' });
+  const before = [...app.state.chords];
+  $('drag-0').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+  expect(app.state.chords[1]).toEqual(before[0]);
+  expect(document.activeElement.id).toBe('drag-1');
+  $('undo').click();
+  expect(app.state.chords).toEqual(before);
+  $('drag-0').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+  expect(app.state.chords).toEqual(before);
+});
+it('changes instruments and toggles transport with Space on a piano key', async () => {
+  change('instrument', 'bell');
+  expect(app.piano.instrument).toBe('bell');
+  const key = $('keyboard').children[0];
+  key.click();
+  key.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true }));
+  await vi.waitFor(() => expect(app.piano.bar).toHaveBeenCalled());
+  key.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true }));
+  expect(app.transport.sequence).toBeNull();
+  $('voice-0-0').click();
+  await vi.waitFor(() => expect(app.piano.play).toHaveBeenCalled());
+});
+it('preserves the selected chord when deleting another tile', () => {
+  $('chord-3').click();
+  const selected = app.state.chords[3];
+  $('delete-0').click();
+  expect(app.state.selected).toBe(2);
+  expect(app.state.chords[app.state.selected]).toEqual(selected);
 });
