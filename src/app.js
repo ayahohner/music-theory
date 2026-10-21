@@ -1,3 +1,5 @@
+import { SCALES, generateInScale } from './scales.js';
+import { renderScale, renderRoman } from './scale-view.js';
 import { qualityLabel } from './chord-catalog.js';
 import { editedChord } from './chord-names.js';
 import { revealChord, renderArrangement } from './timeline.js';
@@ -16,7 +18,7 @@ import { $, markPlaying, options, renderDetail, renderKeyboard, renderNeighbors 
 
 export function createApp(storage, piano = new Piano()) {
   const saved = load(storage) ?? { chords: preset('Jazz turnaround'), key: 0, bpm: 96 };
-  const state = { ...saved, selected: 0 };
+  const state = { scale: 'major', ...saved, selected: 0 };
   const app = { state, storage, piano, history: [], playing: -1 };
   app.transport = new Transport(
     piano,
@@ -34,6 +36,10 @@ function setPlaying(app, index) {
   markPlaying(index);
 }
 function setupOptions() {
+  options(
+    'scale',
+    SCALES.map((name) => [name, name === 'minor' ? 'Natural minor' : name[0].toUpperCase() + name.slice(1)]),
+  );
   options('instrument', Object.entries(INSTRUMENTS));
   $('audition').innerHTML = icon('play');
   $('append').innerHTML = icon('duplicate');
@@ -52,15 +58,19 @@ export function render(app) {
   const { state } = app;
   const notes = voicedProgression(state.chords);
   renderArrangement(state, arrangementActions(app));
+  state.chords.forEach((chord, index) => {
+    renderRoman(chord, index, state);
+  });
   renderDetail(state, notes);
   renderKeyboard(notes[state.selected], (pitches) => audition(app, pitches), state.chords[state.selected]);
+  renderScale(state, (chord) => replace(app, chord));
   renderNeighbors(
     state.chords[state.selected],
     notes[state.selected],
     notes[state.selected - 1] ?? [53, 57, 60, 64],
     (chord) => replace(app, chord),
   );
-  renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord));
+  renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord), state.scale);
   renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
   renderScore(notes, state.selected, (pitches) => audition(app, pitches), noteActions(app, notes), state.chords);
   $('undo').disabled = app.history.length === 0;
@@ -166,7 +176,13 @@ function reorder(app, from, to) {
 }
 function exportSession(app) {
   const blob = new Blob(
-    [JSON.stringify({ key: app.state.key, bpm: app.state.bpm, chords: app.state.chords }, null, 2)],
+    [
+      JSON.stringify(
+        { key: app.state.key, scale: app.state.scale, bpm: app.state.bpm, chords: app.state.chords },
+        null,
+        2,
+      ),
+    ],
     { type: 'application/json' },
   );
   const url = URL.createObjectURL(blob);
@@ -202,10 +218,11 @@ function bindEditing(app) {
     );
   $('quality').onchange = () =>
     replace(app, { root: app.state.chords[app.state.selected].root, quality: $('quality').value });
+  $('scale').onchange = () => update(app, { scale: $('scale').value });
   $('preset').onchange = () => update(app, { chords: preset($('preset').value, app.state.key), selected: 0 });
   $('generate').onclick = () =>
     update(app, {
-      chords: generate(app.state.key, Number($('color').value), Math.random, app.state.chords),
+      chords: generatedChords(app.state),
       selected: 0,
     });
   $('key').onchange = () => shift(app, Number($('key').value) - app.state.key);
@@ -230,6 +247,7 @@ function noteActions(app, voicings) {
       notes[index][voice] = pitch;
       const chord = editedChord(app.state.chords[index], notes[index]);
       previewScore(notes, index, voice, range, chord);
+      renderRoman(chord, index, app.state);
       $(`chord-${index}`).textContent = label(chord);
       $(`chord-${index}`).title = label(chord);
       $(`chord-${index}`).classList.toggle('pitch-set', label(chord).startsWith('['));
@@ -251,4 +269,9 @@ function editNote(app, voicings, index, voice, pitch) {
   chords[index] = editedChord(chords[index], notes);
   update(app, { chords, selected: index });
   listen(app);
+}
+
+function generatedChords(state) {
+  if ($('color').value === '-1') return generateInScale(state.key, state.scale);
+  return generate(state.key, Number($('color').value), Math.random, state.chords);
 }

@@ -1,10 +1,17 @@
+import { validScale } from './scales.js';
 import { QUALITIES } from './theory.js';
 export const initial = () => ({ chords: [], key: 0, bpm: 96 });
 export function validChord(chord) {
   return validRoot(chord?.root) && validQuality(chord) && validNotes(chord.notes);
 }
 export function validSession(value) {
-  return validSettings(value) && value.chords.length > 0 && value.chords.length <= 16 && value.chords.every(validChord);
+  return (
+    validSettings(value) &&
+    validScale(value.scale) &&
+    value.chords.length > 0 &&
+    value.chords.length <= 16 &&
+    value.chords.every(validChord)
+  );
 }
 function validSettings(value) {
   return (

@@ -336,7 +336,7 @@ output {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 0 0 36px;
+  padding: 4px 0 0 36px;
   color: var(--muted);
   font-size: 10px;
   font-family: inherit;
@@ -511,6 +511,7 @@ output {
   font-size: 9px;
 }
 .white {
+  position: relative;
   background: #cfd4df;
   color: #363f4e;
   flex: 1;
@@ -754,4 +755,95 @@ output {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.key-controls {
+  flex-wrap: wrap;
+}
+.scale-palette {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  min-width: 0;
+}
+.scale-palette h3 {
+  white-space: nowrap;
+  font-size: 10px;
+}
+.scale-chords {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  min-width: 0;
+  flex: 1;
+  padding: 2px;
+}
+.scale-chord {
+  display: flex;
+  flex: 1 0 70px;
+  flex-direction: column;
+  align-items: start;
+  gap: 0;
+  padding: 2px 7px;
+}
+.scale-chord span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.scale-chord strong {
+  font-size: 12px;
+  font-weight: 550;
+}
+.key.in-scale::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  bottom: 19px;
+  left: calc(50% - 2px);
+}
+#chord-roman {
+  margin-left: auto;
+  color: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scale-chord:active {
+    scale: 0.96;
+  }
+}
+@media (min-width: 1000px) and (max-height: 760px) {
+  header {
+    padding-block: 6px;
+  }
+  main {
+    padding-block: 6px;
+  }
+  .composition-tools {
+    margin-bottom: 6px;
+  }
+  .workspace,
+  .editor {
+    padding-block: 8px;
+  }
+  .transport {
+    margin-bottom: 6px;
+  }
+  .subheading {
+    margin-top: 8px;
+  }
+  .instrument {
+    margin-top: 6px;
+  }
+  .sound-controls {
+    margin-bottom: 4px;
+  }
+}
+.tile-tools > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

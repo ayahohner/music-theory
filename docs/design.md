@@ -33,3 +33,9 @@ Distinct horizontal positions keep all four voices reachable even at unison. Not
 Acceptance: shared Tonal-backed chord labels across cards, inspector, transformations and neighbors; shared harmonic note spelling across chart, inspector and piano; unchanged playback pitches and saved-session compatibility. The quality selector uses canonical names while preserving legacy storage IDs. Recognition includes sounding bass, alternate roots and slash chords. The application retains its deliberate four-voice omissions, rather than silently adding notes from a complete chord definition.
 
 The inspector calls the stored bass anchor “Bass” because Tonal can infer a different tonic in a slash chord. Harmonic moves use that detected tonic. Both audition and transport play the same bass octave.
+
+### Scale context and Roman analysis
+
+Keep scale selection beside key/transposition controls. Put Roman analysis in existing card headers and the inspector rather than another chart. Scale chord replacements occupy the workspace footer; they preserve score height and scroll within their own row on narrow screens. Keyboard dots distinguish scale membership from the filled selected voicing. At short desktop heights, tighten surrounding spacing instead of shrinking the voice paths. The complete controls and keyboard fit at 1280×720; the page reflows without horizontal page overflow at 320px.
+
+Roman analysis uses a major-scale degree reference relative to the selected tonic in every mode. It identifies chord roots and qualities, not inferred secondary functions. Scale selection changes context without rewriting existing harmony; only explicit replacement or In scale generation changes chords. Undo, local persistence, and export include scale context. The curated jazz palettes remain available for deliberate chromatic harmony.

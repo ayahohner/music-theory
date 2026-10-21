@@ -2,9 +2,9 @@ import { Note } from 'tonal';
 import { transformations } from './harmony.js';
 import { label, NOTES, transposeChord } from './theory.js';
 import { $, button } from './view.js';
-export function renderMoves(chord, key, choose) {
+export function renderMoves(chord, key, choose, scale = 'major') {
   $('moves').replaceChildren(
-    ...transformations(chord, key).map((item) => {
+    ...transformations(chord, key, scale).map((item) => {
       const node = button('move', '', () => choose(item.chord));
       node.id = `move-${item.name}`;
       node.innerHTML = `<span>${item.name}</span><strong>${label(item.chord)}</strong>`;

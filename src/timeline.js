@@ -21,6 +21,8 @@ function tile(chord, index, state, actions) {
   bindDrag(handle, node, index, actions.move);
   const number = document.createElement('span');
   number.textContent = String(index + 1).padStart(2, '0');
+  number.id = `roman-${index}`;
+  number.title = 'Roman numeral relative to key tonic; accidentals reference the major scale. Slash note = bass.';
   header.append(handle, number, ...editTools(index, state, actions));
   const main = button('chord-card', label(chord), () => actions.select(index));
   main.id = `chord-${index}`;
@@ -28,6 +30,7 @@ function tile(chord, index, state, actions) {
   main.classList.toggle('pitch-set', label(chord).startsWith('['));
   main.setAttribute('aria-label', `Chord ${index + 1}: ${label(chord)}`);
   main.setAttribute('aria-pressed', String(index === state.selected));
+  main.setAttribute('aria-describedby', `roman-${index}`);
   node.classList.toggle('selected', index === state.selected);
   node.append(header, main);
   return node;
