@@ -1,13 +1,17 @@
 export const NOTES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 export const QUALITIES = {
+  'maj9♯11': [4, 11, 14, 18],
+  '7♯11': [4, 10, 14, 18],
+  '7alt': [4, 10, 13, 20],
+  m11: [3, 10, 14, 17],
   maj7: [0, 4, 7, 11],
   m7: [0, 3, 7, 10],
   7: [0, 4, 7, 10],
-  maj9: [0, 4, 11, 14],
-  m9: [0, 3, 10, 14],
-  9: [0, 4, 10, 14],
-  13: [0, 4, 10, 21],
-  '7♭9': [0, 4, 10, 13],
+  maj9: [4, 7, 11, 14],
+  m9: [3, 7, 10, 14],
+  9: [4, 7, 10, 14],
+  13: [4, 10, 14, 21],
+  '7♭9': [4, 7, 10, 13],
   'm7♭5': [0, 3, 6, 10],
   dim7: [0, 3, 6, 9],
   '7sus4': [0, 5, 7, 10],
@@ -30,7 +34,7 @@ export function voicings(chord) {
     .filter((notes) => notes[3] <= 83);
 }
 
-export function voice(chord, previous = [60, 64, 67, 71]) {
+export function voice(chord, previous = [53, 57, 60, 64]) {
   return voicings(chord).sort((a, b) => movement(previous, a) - movement(previous, b))[0];
 }
 

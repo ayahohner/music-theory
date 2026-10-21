@@ -1,30 +1,18 @@
 <!doctype html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#171c20"><meta name="description" content="Explore jazz chords, build progressions, and hear smooth voice leading in your browser."><title>Music Theory — Chord Studio</title></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#11151b"><title>Chord studio</title><meta name="description" content="An interactive harmony and groove instrument."></head>
 <body>
-<header><h1>Chord studio</h1><button type="button" id="generate" class="primary">Generate progression</button></header>
+<header><h1>Chord studio<span aria-hidden="true"> /</span></h1><div class="header-actions"><button type="button" id="undo" title="Undo (Z)">↶ Undo</button><button type="button" id="export">Export JSON</button><button type="button" id="generate" class="primary">↗ Generate</button></div></header>
 <main id="main">
-<section class="workspace" aria-labelledby="progression-heading">
-<div class="section-top"><h2 id="progression-heading">Progression</h2><span>4 beats per chord</span></div>
-<div class="toolbar">
-<label>Load preset<select id="preset"></select></label>
-<label>Key<select id="key"></select></label>
-<label>Variation palette<select id="color"><option value="0">Classic</option><option value="1">Tritone substitutions</option><option value="2" selected>Backdoor & tritone</option></select></label>
-<div class="transpose"><span>Transpose</span><div><button type="button" id="down" aria-label="Transpose down a semitone">−</button><button type="button" id="up" aria-label="Transpose up a semitone">+</button></div></div>
-</div>
-<div id="progression" class="progression" ></div>
-<div class="transport"><div class="play-controls"><button type="button" id="play" class="primary">▶ Play progression</button><button type="button" id="stop">■ Stop</button><label class="check"><input type="checkbox" id="loop" checked> Loop</label></div><label class="tempo">Tempo <input id="bpm" type="range" min="40" max="200" value="96"><output id="tempo-output" for="bpm">96 BPM</output></label></div>
+<section class="workspace" aria-label="Progression and transport">
+<div class="toolbar"><label>Preset<select id="preset"></select></label><label>Key<select id="key"></select></label><label>Palette<select id="color"><option value="0">Functional</option><option value="1">+ Tritone</option><option value="2">+ Backdoor</option><option value="3" selected>+ Chromatic</option><option value="4">+ Modal</option></select></label><div class="transpose"><button type="button" id="down" aria-label="Transpose down a semitone">−1</button><button type="button" id="up" aria-label="Transpose up a semitone">+1</button></div></div>
+<div id="progression" class="progression"></div>
+<div class="transport"><div class="play-controls"><button type="button" id="play" class="primary" title="Play / stop (Space)">▶ Play</button><button type="button" id="stop">■ Stop</button><label class="check"><input type="checkbox" id="loop" checked>Loop</label></div><label class="tempo">Tempo<input id="bpm" type="range" min="40" max="200" value="96"><output id="tempo-output" for="bpm">96 BPM</output></label><span class="meter">4/4 · 1 bar / chord</span></div>
 </section>
-<div class="lower-grid">
-<section class="editor" aria-labelledby="editor-heading"><div class="section-top"><h2 id="editor-heading">Selected chord</h2><span id="position"></span></div>
-<div class="chord-detail"><div><div id="chord-name" class="chord-name"></div><p id="notes" class="notes"></p></div><button type="button" id="audition">♫ Listen</button></div>
-<div class="edit-controls"><label>Root<select id="root"></select></label><label>Quality<select id="quality"></select></label><button type="button" id="append">+ Add chord</button><button type="button" id="remove">Remove</button></div>
-<div class="keyboard-scroll"><div id="keyboard" class="keyboard" ></div></div>
-<p class="caption">Upper voicing shown; root bass added on playback.</p>
-<div class="voicing-info"><span>Voice leading</span><strong id="movement"></strong></div>
-</section>
-<section class="explorer" aria-labelledby="explorer-heading"><div class="section-top"><h2 id="explorer-heading">Nearby harmonies</h2></div><p>Choose a chord to replace the selection.</p><div id="neighbors" class="neighbors"></div><p class="caption">Distance: total semitone movement across four voices.</p></section>
+<div class="studio-grid">
+<section class="editor" aria-labelledby="editor-heading"><div class="section-top"><h2 id="editor-heading">Chord</h2><span id="position"></span></div><div class="chord-detail"><div id="chord-name" class="chord-name"></div><button type="button" id="audition">♫ Hear</button></div><p id="notes" class="notes"></p><div class="edit-controls"><label>Root<select id="root"></select></label><label>Quality<select id="quality"></select></label></div><div class="chord-actions"><button type="button" id="append">+ Duplicate</button><button type="button" id="remove">Remove</button></div><h3>Roots · circle of fifths</h3><div id="root-map" class="root-map"></div></section>
+<section class="harmonics" aria-labelledby="harmonics-heading"><div class="section-top"><h2 id="harmonics-heading">Harmonic moves</h2><span>Replace + hear</span></div><div id="moves" class="moves"></div><div class="section-top path-heading"><h3>Voice paths</h3><span id="movement"></span></div><div id="voice-paths" class="voice-paths"></div><p class="legend"><span>Low</span><i></i><i></i><i></i><i></i><span>High · pitch ↑ / chord →</span></p></section>
+<section class="explorer" aria-labelledby="explorer-heading"><div class="section-top"><h2 id="explorer-heading">Nearest voicings</h2><span>Σ semitones</span></div><div id="neighbors" class="neighbors"></div><div class="groove-controls"><label>Groove<select id="groove"><option value="hold">Chords only</option><option value="pocket" selected>Swung pocket</option><option value="broken">Half-time / broken</option></select></label><label>Bass motion<input id="wobble" type="range" min="0" max="100" value="40"></label><label>Volume<input id="volume" type="range" min="0" max="100" value="55"></label></div></section>
 </div>
-<footer><button type="button" id="export">↓ Export progression JSON</button></footer>
+<section class="instrument" aria-label="Playable keyboard"><div class="keyboard-scroll"><div id="keyboard" class="keyboard"></div></div><div class="instrument-caption"><span>C3–B5 · upper voices highlighted · root bass added</span><span>Space: play / stop · Z: undo</span></div></section>
 <p id="status" role="status" class="status"></p>
 </main><script type="module" src="/src/main.js"></script></body></html>

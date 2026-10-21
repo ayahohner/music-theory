@@ -1,3 +1,5 @@
+import { renderMoves, renderRoots, voicePaths } from './exploration.js';
+import { bindPerformance, remember, undo } from './performance.js';
 import { Piano } from './audio.js';
 import { generate, preset, PRESETS } from './progressions.js';
 import { load, save } from './storage.js';
@@ -8,12 +10,21 @@ import { $, markPlaying, options, renderCards, renderDetail, renderKeyboard, ren
 export function createApp(storage, piano = new Piano()) {
   const saved = load(storage) ?? { chords: preset('Jazz turnaround'), key: 0, bpm: 96 };
   const state = { ...saved, selected: 0 };
-  const transport = new Transport(piano, markPlaying, () => markPlaying(-1));
-  const app = { state, storage, piano, transport };
+  const app = { state, storage, piano, history: [], playing: -1 };
+  app.transport = new Transport(
+    piano,
+    (index) => setPlaying(app, index),
+    () => setPlaying(app, -1),
+  );
   setupOptions();
   bindControls(app);
+  bindPerformance(app, () => undo(app, render, persist));
   render(app);
   return app;
+}
+function setPlaying(app, index) {
+  app.playing = index;
+  markPlaying(index);
 }
 function setupOptions() {
   const notes = NOTES.map((name, index) => [index, name]);
@@ -23,12 +34,11 @@ function setupOptions() {
     'quality',
     Object.keys(QUALITIES).map((name) => [name, name]),
   );
-  options(
-    'preset',
-    Object.keys(PRESETS).map((name) => [name, name]),
-  );
+  options('preset', [['', 'Load…'], ...Object.keys(PRESETS).map((name) => [name, name])]);
 }
 export function render(app) {
+  $('preset').value = '';
+  $('preset').options[0].disabled = true;
   const focused = document.activeElement;
   const { state } = app;
   const notes = voicedProgression(state.chords);
@@ -38,9 +48,14 @@ export function render(app) {
   renderNeighbors(
     state.chords[state.selected],
     notes[state.selected],
-    notes[state.selected - 1] ?? [60, 64, 67, 71],
+    notes[state.selected - 1] ?? [53, 57, 60, 64],
     (chord) => replace(app, chord),
   );
+  renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord));
+  renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
+  voicePaths(notes, state.selected);
+  $('undo').disabled = app.history.length === 0;
+  markPlaying(app.playing);
   restoreFocus(focused, state.selected);
 }
 function restoreFocus(focused, selected) {
@@ -54,23 +69,28 @@ function persist(app) {
     ? 'Saved locally.'
     : 'Browser storage unavailable. Export JSON to keep your progression.';
 }
-export function update(app, changes) {
+export function update(app, changes, record = true) {
+  if (record) remember(app);
   app.transport.stop();
   Object.assign(app.state, changes);
   render(app);
   persist(app);
 }
 function select(app, selected) {
-  update(app, { selected });
+  app.state.selected = selected;
+  render(app);
 }
 function replace(app, chord) {
   const chords = [...app.state.chords];
   chords[app.state.selected] = chord;
   update(app, { chords });
+  listen(app);
 }
 export async function audition(app, notes) {
+  const token = app.transport.token;
   try {
     await app.piano.ready();
+    if (token !== app.transport.token) return;
     app.piano.play(notes);
   } catch {
     $('status').textContent = 'Audio could not start. Check browser audio permissions and try Listen again.';
@@ -83,8 +103,8 @@ function listen(app) {
 async function play(app) {
   const notes = voicedProgression(app.state.chords).map((voicing, i) => [36 + app.state.chords[i].root, ...voicing]);
   try {
-    await app.transport.start(notes, app.state.bpm, $('loop').checked);
-    $('status').textContent = 'Playing.';
+    const started = await app.transport.start(notes, app.state.bpm, $('loop').checked);
+    if (started) $('status').textContent = 'Playing.';
   } catch {
     $('status').textContent = 'Audio could not start. Check browser audio permissions and try again.';
   }
@@ -124,7 +144,10 @@ function bindControls(app) {
     $('status').textContent = 'Playback stopped.';
   };
   $('audition').onclick = () => listen(app);
-  $('bpm').oninput = () => update(app, { bpm: Number($('bpm').value) });
+  $('bpm').oninput = () => changeTempo(app);
+  $('bpm').onchange = () => {
+    app.editingTempo = false;
+  };
   $('loop').onchange = () => app.transport.stop();
   $('export').onclick = () => exportSession(app);
 }
@@ -142,4 +165,10 @@ function bindEditing(app) {
   $('down').onclick = () => shift(app, -1);
   $('append').onclick = () => append(app);
   $('remove').onclick = () => remove(app);
+}
+
+function changeTempo(app) {
+  if (!app.editingTempo) remember(app);
+  app.editingTempo = true;
+  update(app, { bpm: Number($('bpm').value) }, false);
 }

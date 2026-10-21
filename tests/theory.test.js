@@ -15,7 +15,7 @@ describe('musical invariants', () => {
     const chords = preset('Jazz turnaround');
     expect(chords.map((c) => c.root)).toEqual([2, 7, 0, 9]);
     expect(transpose(transpose(chords, -1), 1)).toEqual(chords);
-    expect(pitchClasses({ root: 2, quality: 'm9' })).toEqual([2, 5, 0, 4]);
+    expect(pitchClasses({ root: 2, quality: 'm9' })).toEqual([5, 9, 0, 4]);
   });
   it('keeps every candidate sorted, in range, and faithful to its chord', () => {
     for (let root = 0; root < 12; root++)
@@ -55,7 +55,7 @@ it('neighbor scores match the voicing actually heard after replacement', () => {
   const chords = preset('Jazz turnaround');
   const notes = voicedProgression(chords);
   for (let index = 0; index < chords.length; index++) {
-    const previous = notes[index - 1] ?? [60, 64, 67, 71];
+    const previous = notes[index - 1] ?? [53, 57, 60, 64];
     for (const candidate of neighbors(chords[index], notes[index], previous)) {
       const changed = [...chords];
       changed[index] = candidate.chord;
@@ -72,4 +72,16 @@ it('varies chord colors and prevents an unchanged generated progression', () => 
   expect(low).not.toEqual(high);
   expect(generate(0, 0, () => 0, low)).not.toEqual(low);
   expect(generate(0, 0, () => 0.99, high)).not.toEqual(high);
+});
+it('generates bounded chromatic and modal phrases with valid voices in every key', () => {
+  for (let key = 0; key < 12; key++) {
+    const chromatic = generate(key, 3, () => 0.999);
+    const modal = generate(key, 4, () => 0.999);
+    expect(chromatic).toHaveLength(8);
+    expect(modal).toHaveLength(4);
+    for (const chord of [...chromatic, ...modal]) {
+      expect(Object.hasOwn(QUALITIES, chord.quality)).toBe(true);
+      expect(voice(chord)).toHaveLength(4);
+    }
+  }
 });

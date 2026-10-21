@@ -15,12 +15,12 @@ Open the local URL printed by Vite. Browser synthesis starts only after a play/l
 
 ## Musical model
 
-- Twelve-tone equal temperament, twelve chord qualities, and up to sixteen chords.
-- Four upper voices plus a separate root bass. Extensions use incomplete voicings: the fifth is omitted from ninths and thirteenths.
+- Twelve-tone equal temperament, sixteen chord qualities, and up to sixteen chords.
+- Four upper voices plus a separate root bass. Ninths, thirteenths, and the new altered/Lydian colors use rootless four-note upper structures; the separate bass supplies the root.
 - Each chord chooses the nearest available inversion to the preceding chord, minimizing summed semitone movement. This is a greedy, bounded search, not global phrase optimization.
 - Six nearby harmonies are ranked by that same distance. Closeness does not establish harmonic function.
-- Generation samples a small jazz grammar: ii–V–I–VI, tritone substitution, and backdoor cadence. Seventh, ninth, and thirteenth colors vary within the selected grammar; consecutive identical results are avoided. The minor cadence is also available as a preset. This is template-based generation, not an arbitrary-dimensional Tonnetz implementation.
-- Notes use flat enharmonic display names rather than context-sensitive spelling. Audio is a lightweight triangle-wave synthesizer, not a piano sample library.
+- Generation samples a small jazz grammar: ii–V–I–VI, tritone substitution, and backdoor cadence. Seventh, ninth, and thirteenth colors vary within the selected grammar; consecutive identical results are avoided. The minor cadence is also available as a preset. Chromatic-orbit and suspended-minor templates extend the palette to eight-chord phrases and rootless altered/Lydian voicings. This is template-based generation, not an arbitrary-dimensional Tonnetz implementation.
+- Notes use flat enharmonic display names rather than context-sensitive spelling. Audio uses FM electric keys, filtered saw bass, and synthesized kick/snare/hi-hat through a shared compressor. Choose held chords, swung pocket, or a half-time broken groove. Bass motion controls filter sweeps; volume controls the output gain. This is synthesis, not a sampled piano.
 - No song transcription, third-party accounts, backend, or audio uploads.
 
 ## Quality
@@ -40,4 +40,10 @@ CRAP = CC² × (1 − statement coverage)³ + CC. Untested functions receive zer
 
 ## Structure
 
-`src/theory.js` and `src/progressions.js` contain pure musical logic. `audio.js` owns synthesis, `transport.js` playback cancellation, `storage.js` validation, and `app.js` / `view.js` UI state and rendering. `docs/design.md` records design acceptance criteria.
+`src/theory.js` and `src/progressions.js` contain pure musical logic. `audio.js` / `synthesis.js` own audio nodes, `groove.js` defines beat events, `transport.js` schedules ahead on the audio clock and owns cancellation, `storage.js` validation, and `app.js` / `view.js` UI state and rendering. `docs/design.md` records design acceptance criteria.
+
+## Performing and exploring
+
+Select a chord to inspect it without interrupting playback. Harmonic moves, root pads, and nearby voicings replace it and audition the result. The four voice paths show actual upper-voice MIDI pitches across the phrase. Distances exclude bass motion. Undo restores up to forty edits; a tempo drag counts as one edit. Space toggles transport when not on a native control; Z undoes when not editing a field.
+
+Groove settings are session controls; the saved/exported progression contains chords, key, and tempo. Edits and groove changes stop playback. Audio uses an audio-clock lookahead scheduler; hiding the page stops playback to avoid throttled background scheduling.

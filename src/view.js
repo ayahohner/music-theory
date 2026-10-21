@@ -1,4 +1,4 @@
-import { label, movement, neighbors, noteName, NOTES, wrap } from './theory.js';
+import { label, movement, neighbors, noteName, NOTES, wrap, pitchClasses } from './theory.js';
 export const $ = (id) => document.getElementById(id);
 export function options(id, values) {
   $(id).replaceChildren(...values.map(([value, text]) => new Option(text, value)));
@@ -18,7 +18,11 @@ export function renderCards(state, select) {
       node.id = `chord-${index}`;
       node.setAttribute('aria-pressed', String(index === state.selected));
       node.setAttribute('aria-label', `Chord ${index + 1}: ${label(chord)}`);
-      node.innerHTML = `<span class="number">${String(index + 1).padStart(2, '0')}</span><strong>${label(chord)}</strong><span class="beats" aria-hidden="true">● ● ● ●</span>`;
+      node.innerHTML = `<span class="number">${String(index + 1).padStart(2, '0')}</span><strong>${label(chord)}</strong><span class="beats">${pitchClasses(
+        chord,
+      )
+        .map((n) => NOTES[n])
+        .join(' · ')}</span>`;
       return node;
     }),
   );
@@ -46,7 +50,7 @@ export function renderNeighbors(chord, notes, previous, replace) {
     ...neighbors(chord, notes, previous).map((candidate) => {
       const node = button('neighbor', '', () => replace(candidate.chord));
       node.id = `neighbor-${candidate.chord.root}-${candidate.chord.quality}`;
-      node.innerHTML = `<strong>${label(candidate.chord)}</strong><span>${candidate.distance} st · replace</span>`;
+      node.innerHTML = `<strong>${label(candidate.chord)}</strong><span>${candidate.distance} st</span>`;
       return node;
     }),
   );
@@ -67,10 +71,12 @@ function pianoKey(note, black, whites, notes, play) {
   node.id = `key-${note}`;
   node.classList.toggle('active', notes.includes(note));
   node.setAttribute('aria-label', `Play ${noteName(note)}`);
-  if (black) node.style.left = `${(whites / 21) * 100 - 2.25}%`;
+  if (black) node.style.left = `${(whites / 21) * 100 - 1.55}%`;
   return node;
 }
 export function markPlaying(index) {
+  $('play').classList.toggle('running', index >= 0);
+  $('play').textContent = index >= 0 ? '↺ Restart' : '▶ Play';
   [...$('progression').children].forEach((node, position) => {
     node.classList.toggle('playing', position === index);
   });

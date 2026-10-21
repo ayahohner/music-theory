@@ -1,37 +1,52 @@
+import { barEvents } from './groove.js';
+import { bass, electric, kick, noiseBuffer, noiseHit } from './synthesis.js';
 export class Piano {
   constructor(create = () => new AudioContext()) {
-    this.create = create;
-    this.context = null;
-    this.voices = new Set();
+    Object.assign(this, { create, context: null, voices: new Set(), groove: 'pocket', wobble: 0.4, volume: 0.55 });
   }
   async ready() {
-    this.context ??= this.create();
+    if (!this.context) this.initialize();
     await this.context.resume();
+  }
+  initialize() {
+    this.context = this.create();
+    this.output = this.context.createGain();
+    this.compressor = this.context.createDynamicsCompressor();
+    this.output.gain.value = this.volume;
+    this.output.connect(this.compressor).connect(this.context.destination);
+    this.noise = noiseBuffer(this.context);
+  }
+  setVolume(value) {
+    this.volume = value;
+    if (this.output) this.output.gain.setTargetAtTime(value, this.context.currentTime, 0.02);
   }
   play(notes, duration = 1.4) {
     notes.forEach((note) => {
-      this.tone(note, duration);
+      electric(this, note, this.context.currentTime, duration);
     });
   }
-  tone(note, duration) {
-    const ctx = this.context;
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const start = ctx.currentTime;
-    oscillator.type = 'triangle';
-    oscillator.frequency.value = 440 * 2 ** ((note - 69) / 12);
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(0.055, start + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-    oscillator.connect(gain).connect(ctx.destination);
-    this.voices.add(oscillator);
-    oscillator.onended = () => {
-      this.voices.delete(oscillator);
-      oscillator.disconnect();
-      gain.disconnect();
+  bar(notes, duration, start) {
+    const events = barEvents(notes, duration, this.groove);
+    events.forEach((event) => {
+      this.hit(event, start, duration);
+    });
+  }
+  hit(event, start, duration) {
+    const at = start + event.at;
+    const handlers = {
+      chord: () => this.chord(event.notes, at, duration),
+      bass: () => bass(this, event.notes[0], at, duration / 5, this.wobble),
+      kick: () => kick(this, at),
+      snare: () => noiseHit(this, at, true),
+      hat: () => noiseHit(this, at, false),
     };
-    oscillator.start(start);
-    oscillator.stop(start + duration + 0.05);
+    handlers[event.kind]();
+  }
+  chord(notes, start, duration) {
+    const length = this.groove === 'hold' ? duration * 0.9 : duration / 4;
+    notes.forEach((note) => {
+      electric(this, note, start, length);
+    });
   }
   stop() {
     this.voices.forEach((oscillator) => {

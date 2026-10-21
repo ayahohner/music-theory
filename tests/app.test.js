@@ -11,7 +11,14 @@ const change = (id, value) => {
 beforeEach(() => {
   document.documentElement.innerHTML = html;
   localStorage.clear();
-  app = createApp(localStorage, { ready: vi.fn().mockResolvedValue(), play: vi.fn(), stop: vi.fn() });
+  app = createApp(localStorage, {
+    ready: vi.fn().mockResolvedValue(),
+    play: vi.fn(),
+    bar: vi.fn(),
+    context: { currentTime: 0 },
+    setVolume: vi.fn(),
+    stop: vi.fn(),
+  });
 });
 it('edits, transposes, selects and replaces chords through real controls', () => {
   expect($('progression').children).toHaveLength(4);
@@ -37,13 +44,14 @@ it('handles progression lengths, presets, tempo, playback and storage failure', 
   expect(app.state.chords).toHaveLength(1);
   change('preset', 'Minor cadence');
   expect(app.state.chords[0].quality).toBe('m7♭5');
+  change('color', '0');
   $('generate').click();
   expect(app.state.chords).toHaveLength(4);
   $('bpm').value = '120';
   $('bpm').dispatchEvent(new Event('input'));
   expect(app.state.bpm).toBe(120);
   $('play').click();
-  await vi.waitFor(() => expect(app.piano.play).toHaveBeenCalled());
+  await vi.waitFor(() => expect(app.piano.bar).toHaveBeenCalled());
   $('loop').dispatchEvent(new Event('change'));
   expect(app.transport.timer).toBeNull();
   $('stop').click();
@@ -76,4 +84,84 @@ it('preserves keyboard focus when selecting and replacing a chord', () => {
   neighbor.focus();
   neighbor.click();
   expect(document.activeElement.id).toBe('chord-1');
+});
+it('supports reversible harmonic moves, root exploration and performance controls', () => {
+  const original = JSON.stringify(app.state.chords);
+  $('moves').children[3].click();
+  expect(app.state.chords[0].quality).toBe('7♯11');
+  $('undo').click();
+  expect(JSON.stringify(app.state.chords)).toBe(original);
+  $('root-map').children[1].click();
+  expect(app.state.chords[0].root).toBe(7);
+  expect($('voice-paths').querySelectorAll('polyline')).toHaveLength(4);
+  change('groove', 'broken');
+  expect(app.piano.groove).toBe('broken');
+  $('wobble').value = '80';
+  $('wobble').dispatchEvent(new Event('input'));
+  expect(app.piano.wobble).toBe(0.8);
+  $('volume').value = '25';
+  $('volume').dispatchEvent(new Event('input'));
+  expect(app.piano.setVolume).toHaveBeenCalledWith(0.25);
+});
+it('does not play a deferred audition after Stop', async () => {
+  let resume;
+  app.piano.ready.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resume = resolve;
+      }),
+  );
+  const pending = audition(app, [60]);
+  $('stop').click();
+  resume();
+  await pending;
+  expect(app.piano.play).not.toHaveBeenCalled();
+});
+it('handles play and undo shortcuts without stealing form input', async () => {
+  const press = (target, key, code) =>
+    target.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true }));
+  const original = JSON.stringify(app.state.chords);
+  $('moves').children[2].click();
+  press($('root'), 'z', 'KeyZ');
+  expect(JSON.stringify(app.state.chords)).not.toBe(original);
+  press(document.body, 'z', 'KeyZ');
+  expect(JSON.stringify(app.state.chords)).toBe(original);
+  press(document.body, ' ', 'Space');
+  await vi.waitFor(() => expect(app.piano.bar).toHaveBeenCalled());
+  press(document.body, ' ', 'Space');
+  expect(app.transport.sequence).toBeNull();
+});
+it('preserves native button Space, semantic focus and playing indication', () => {
+  const hear = $('audition');
+  hear.focus();
+  const event = new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true });
+  hear.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(false);
+  expect(app.piano.bar).not.toHaveBeenCalled();
+  const move = $('move-Side-slip');
+  move.focus();
+  move.click();
+  expect(document.activeElement.id).toBe('move-Side-slip');
+  const root = $('root-pad-7');
+  root.focus();
+  root.click();
+  expect(document.activeElement.id).toBe('root-pad-7');
+  app.transport.onStep(0);
+  $('chord-1').click();
+  expect($('chord-0').classList.contains('playing')).toBe(true);
+  expect($('chord-1').getAttribute('aria-pressed')).toBe('true');
+});
+it('treats tempo dragging as one undoable edit and retains earlier chord changes', () => {
+  const original = JSON.stringify(app.state.chords);
+  $('moves').children[2].click();
+  for (let bpm = 97; bpm <= 160; bpm++) {
+    $('bpm').value = String(bpm);
+    $('bpm').dispatchEvent(new Event('input'));
+  }
+  $('bpm').dispatchEvent(new Event('change'));
+  expect(app.history).toHaveLength(2);
+  $('undo').click();
+  expect(app.state.bpm).toBe(96);
+  $('undo').click();
+  expect(JSON.stringify(app.state.chords)).toBe(original);
 });
