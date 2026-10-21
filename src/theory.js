@@ -23,15 +23,15 @@ export function transposeChord(chord, amount) {
 }
 export const movement = (from, to) => from.reduce((sum, note, index) => sum + Math.abs(note - to[index]), 0);
 
-export function voicings(chord) {
+export function voicings(chord, octaves = [48, 60], ceiling = 83) {
   if (chord.notes) return [[...chord.notes]];
   const pitches = pitchClasses(chord).sort((a, b) => a - b);
   return pitches
     .flatMap((_, inversion) => {
       const rotated = [...pitches.slice(inversion), ...pitches.slice(0, inversion).map((n) => n + 12)];
-      return [48, 60].map((octave) => rotated.map((n) => n + octave));
+      return octaves.map((octave) => rotated.map((n) => n + octave));
     })
-    .filter((notes) => notes[3] <= 83);
+    .filter((notes) => notes[3] <= ceiling);
 }
 
 export function voice(chord, previous = [53, 57, 60, 64]) {
@@ -45,11 +45,17 @@ export function voicedProgression(chords) {
   }, []);
 }
 
-export function neighbors(chord, notes, previous = notes) {
+export function neighbors(chord, notes) {
   return NOTES.flatMap((_, root) => Object.keys(QUALITIES).map((quality) => ({ root, quality })))
     .filter((candidate) => label(candidate) !== label(chord))
-    .map((candidate) => ({ chord: candidate, notes: voice(candidate, previous) }))
+    .map((candidate) => nearbyVoicing(candidate, notes))
     .map((candidate) => ({ ...candidate, distance: movement(notes, candidate.notes) }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 6);
+}
+
+function nearbyVoicing(chord, current) {
+  const octaves = Array.from({ length: 11 }, (_, i) => i * 12);
+  const notes = voicings(chord, octaves, 127).sort((a, b) => movement(current, a) - movement(current, b))[0];
+  return { chord: { ...chord, notes }, notes };
 }

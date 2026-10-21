@@ -27,6 +27,6 @@ export function renderScale(state, choose) {
 export function renderRoman(chord, index, state) {
   const text = roman(chord, state.key, state.scale);
   $(`roman-${index}`).title = `${text} · Relative to key tonic; accidentals reference major. Slash note = bass.`;
-  $(`roman-${index}`).textContent = `${String(index + 1).padStart(2, '0')} · ${text}`;
+  $(`roman-${index}`).textContent = text;
   if (index === state.selected) $('chord-roman').textContent = text;
 }

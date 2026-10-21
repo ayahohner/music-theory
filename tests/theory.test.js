@@ -55,8 +55,7 @@ it('neighbor scores match the voicing actually heard after replacement', () => {
   const chords = preset('Jazz turnaround');
   const notes = voicedProgression(chords);
   for (let index = 0; index < chords.length; index++) {
-    const previous = notes[index - 1] ?? [53, 57, 60, 64];
-    for (const candidate of neighbors(chords[index], notes[index], previous)) {
+    for (const candidate of neighbors(chords[index], notes[index])) {
       const changed = [...chords];
       changed[index] = candidate.chord;
       const actual = voicedProgression(changed)[index];
@@ -82,6 +81,24 @@ it('generates bounded chromatic and modal phrases with valid voices in every key
     for (const chord of [...chromatic, ...modal]) {
       expect(Object.hasOwn(QUALITIES, chord.quality)).toBe(true);
       expect(voice(chord)).toHaveLength(4);
+    }
+  }
+});
+
+it('finds nearby replacements in the edited register, including the first chord', () => {
+  for (const notes of [
+    [29, 33, 36, 40],
+    [65, 69, 72, 76],
+    [77, 81, 84, 88],
+    [113, 117, 120, 124],
+  ]) {
+    const chord = { root: 2, quality: 'custom', notes };
+    const rows = neighbors(chord, notes);
+    expect(rows[0].distance).toBeLessThanOrEqual(2);
+    for (const row of rows) {
+      expect(row.chord.notes).toEqual(row.notes);
+      expect(row.distance).toBe(movement(notes, voicedProgression([row.chord])[0]));
+      expect(row.notes.every((n) => n >= 0 && n <= 127)).toBe(true);
     }
   }
 });

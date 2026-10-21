@@ -20,7 +20,6 @@ function tile(chord, index, state, actions) {
   handle.id = `drag-${index}`;
   bindDrag(handle, node, index, actions.move);
   const number = document.createElement('span');
-  number.textContent = String(index + 1).padStart(2, '0');
   number.id = `roman-${index}`;
   number.title = 'Roman numeral relative to key tonic; accidentals reference the major scale. Slash note = bass.';
   header.append(handle, number, ...editTools(index, state, actions));

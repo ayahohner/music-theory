@@ -30,10 +30,11 @@ function movementLabel(index, voicings) {
   if (index === 0) return 'Starting voicing';
   return `${movement(voicings[index - 1], voicings[index])} semitones from previous chord`;
 }
-export function renderNeighbors(chord, notes, previous, replace) {
+export function renderNeighbors(chord, notes, replace) {
   $('neighbors').replaceChildren(
-    ...neighbors(chord, notes, previous).map((candidate) => {
+    ...neighbors(chord, notes).map((candidate) => {
       const node = button('neighbor', '', () => replace(candidate.chord));
+      node.title = 'Total semitone movement of the four upper voices from the selected chord';
       node.id = `neighbor-${candidate.chord.root}-${candidate.chord.quality}`;
       node.innerHTML = `<strong>${label(candidate.chord)}</strong><span>${candidate.distance} st</span>`;
       return node;

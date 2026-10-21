@@ -64,12 +64,7 @@ export function render(app) {
   renderDetail(state, notes);
   renderKeyboard(notes[state.selected], (pitches) => audition(app, pitches), state.chords[state.selected]);
   renderScale(state, (chord) => replace(app, chord));
-  renderNeighbors(
-    state.chords[state.selected],
-    notes[state.selected],
-    notes[state.selected - 1] ?? [53, 57, 60, 64],
-    (chord) => replace(app, chord),
-  );
+  renderNeighbors(state.chords[state.selected], notes[state.selected], (chord) => replace(app, chord));
   renderMoves(state.chords[state.selected], state.key, (chord) => replace(app, chord), state.scale);
   renderRoots(state.chords[state.selected], (chord) => replace(app, chord));
   renderScore(notes, state.selected, (pitches) => audition(app, pitches), noteActions(app, notes), state.chords);

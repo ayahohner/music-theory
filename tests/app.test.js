@@ -1,3 +1,5 @@
+import { update } from '../src/app.js';
+import { movement, voicedProgression } from '../src/theory.js';
 import { readFileSync } from 'node:fs';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { createApp, audition } from '../src/app.js';
@@ -302,4 +304,18 @@ it('changes scale context without changing chords, supports in-scale replacement
   $('up').click();
   expect(app.state.key).toBe(1);
   expect($('scale').value).toBe('minor pentatonic');
+});
+
+it('shows only Roman notation and auditions the advertised first-chord replacement distance', async () => {
+  expect($('roman-0').textContent).toBe('ii9');
+  expect($('roman-1').textContent).toBe('V13');
+  const notes = [65, 69, 72, 76];
+  update(app, { chords: [{ root: 2, quality: 'custom', notes }], selected: 0 });
+  const replacement = $('neighbors').children[0];
+  const distance = Number.parseInt(replacement.querySelector('span').textContent, 10);
+  expect(distance).toBeLessThanOrEqual(2);
+  replacement.click();
+  const actual = voicedProgression(app.state.chords)[0];
+  expect(movement(notes, actual)).toBe(distance);
+  await vi.waitFor(() => expect(app.piano.play).toHaveBeenCalledWith([36 + app.state.chords[0].root, ...actual]));
 });
