@@ -1,0 +1,409 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: oklch(0.92 0.01 85);
+  background: oklch(0.2 0.012 240);
+  font-synthesis: none;
+  --panel: oklch(0.245 0.012 240);
+  --muted: oklch(0.73 0.015 240);
+  --line: oklch(0.37 0.015 240);
+  --accent: oklch(0.85 0.13 155);
+  --ink: oklch(0.2 0.03 160);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+select,
+input {
+  font: inherit;
+}
+button,
+select {
+  min-height: 44px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: oklch(0.29 0.012 240);
+  color: inherit;
+  padding: 10px 14px;
+}
+button {
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover {
+  background: oklch(0.36 0.02 240);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.primary {
+  background: var(--accent);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.primary:hover {
+  background: oklch(0.91 0.1 155);
+}
+header {
+  min-height: 86px;
+  padding: 20px 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  gap: 24px;
+}
+main {
+  max-width: 1400px;
+  padding: 48px 5% 24px;
+  margin: auto;
+}
+h1 {
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  margin: 12px 0 16px;
+  font-weight: 550;
+  text-wrap: balance;
+}
+p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.workspace,
+.editor,
+.explorer {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+.section-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.section-top > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.toolbar,
+.edit-controls {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+label,
+.transpose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+select {
+  color: oklch(0.94 0.01 85);
+  min-width: 90px;
+  font-size: 14px;
+}
+.transpose {
+  margin-left: auto;
+}
+.transpose > div {
+  display: flex;
+  gap: 8px;
+}
+footer button {
+  font-size: 12px;
+}
+.transpose button {
+  min-width: 44px;
+}
+.progression {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 26px 0;
+}
+.chord-card {
+  text-align: left;
+  padding: 18px;
+  min-height: 135px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: oklch(0.27 0.012 240);
+}
+.chord-card .number {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+}
+.chord-card strong {
+  font-size: clamp(22px, 2.8vw, 34px);
+  letter-spacing: -0.035em;
+  font-weight: 500;
+}
+.chord-card .beats {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 8px;
+}
+.chord-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: oklch(0.32 0.035 160);
+  box-shadow: inset 0 3px var(--accent);
+}
+.chord-card.playing .number::after {
+  content: " · PLAYING";
+  color: var(--accent);
+}
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.play-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.check,
+.tempo {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+input {
+  accent-color: var(--accent);
+}
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.tempo input {
+  width: 100px;
+}
+output {
+  min-width: 57px;
+  font-variant-numeric: tabular-nums;
+}
+.lower-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+.chord-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+.chord-name {
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+}
+.notes {
+  margin: 8px 0 0;
+  font-family: monospace;
+  font-size: 14px;
+}
+.edit-controls {
+  gap: 12px;
+}
+.edit-controls button {
+  font-size: 12px;
+}
+.keyboard-scroll {
+  overflow-x: auto;
+  margin-top: 26px;
+  border-radius: 6px;
+}
+.keyboard {
+  display: flex;
+  position: relative;
+  height: 142px;
+  min-width: 480px;
+}
+.key {
+  border: 1px solid oklch(0.4 0 0);
+  border-radius: 0 0 5px 5px;
+  padding: 0 0 12px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+.white {
+  background: oklch(0.94 0.01 85);
+  color: oklch(0.3 0 0);
+  flex: 1;
+}
+.black {
+  position: absolute;
+  top: 0;
+  width: 4.5%;
+  height: 62%;
+  background: oklch(0.18 0.01 240);
+  color: oklch(0.85 0 0);
+  z-index: 1;
+}
+.key.active {
+  background: var(--accent);
+  color: var(--ink);
+}
+.key:hover {
+  background: oklch(0.76 0.08 155);
+}
+.caption {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.voicing-info {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 24px;
+}
+.voicing-info span {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-right: 12px;
+}
+.voicing-info strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.voicing-info p {
+  font-size: 12px;
+  margin-bottom: 0;
+}
+.explorer > p {
+  font-size: 14px;
+}
+.neighbors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 22px 0;
+}
+.neighbor {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+.neighbor strong {
+  font-size: 22px;
+  font-weight: 500;
+}
+.neighbor span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  font-size: 12px;
+}
+.status {
+  font-size: 12px;
+  min-height: 20px;
+  color: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition:
+      background 120ms,
+      transform 120ms;
+  }
+  button:active {
+    transform: scale(0.96);
+  }
+  .key:active {
+    transform: none;
+  }
+}
+@media (max-width: 950px) {
+  .lower-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  main {
+    padding: 28px 16px;
+  }
+  header {
+    padding: 16px;
+  }
+  .workspace,
+  .editor,
+  .explorer {
+    padding: 18px;
+  }
+  .progression {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .toolbar > label:first-child {
+    width: 100%;
+  }
+  .transpose {
+    margin-left: 0;
+  }
+  footer {
+    flex-direction: column;
+    align-items: start;
+  }
+  .tempo {
+    flex-wrap: wrap;
+  }
+  .chord-card strong {
+    font-size: 28px;
+  }
+}
+
+header h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+main {
+  padding-top: 24px;
+}
+footer {
+  justify-content: flex-end;
+}
+.status:empty {
+  display: none;
+}

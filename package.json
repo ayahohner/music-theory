@@ -1,0 +1,30 @@
+{
+  "name": "music-theory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local jazz harmony playground with voice-leading exploration.",
+  "engines": {
+    "node": ">=24.19.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "quality": "node scripts/quality-gate.mjs src/*.js scripts/quality/*.mjs scripts/quality-gate.mjs --max-crap 8 --min-mi 70",
+    "check": "npm run lint && npm run quality && npm run build",
+    "prepare": "git config core.hooksPath .githooks"
+  },
+  "devDependencies": {
+    "@babel/parser": "^8.0.6",
+    "@biomejs/biome": "^2.5.14",
+    "@vitest/coverage-v8": "^5.0.2",
+    "vitest": "^5.0.2",
+    "vite": "^7.1.0",
+    "jsdom": "^27.0.0"
+  }
+}
